@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { publicAssetUrl } from '@/lib/publicAssetUrl';
 import { Play } from 'lucide-react';
 
 export default function ContinueWatching({ history, episodes, allSeries, profileName }) {
@@ -21,7 +22,7 @@ export default function ContinueWatching({ history, episodes, allSeries, profile
 
   return (
     <div className="mb-8 md:mb-10">
-      <h2 className="text-base md:text-lg font-semibold mb-3 px-4 md:px-12 text-white">
+      <h2 className="text-base md:text-lg font-semibold mb-3 px-4 md:px-12 members-heading-gradient">
         {profileName ? `Continuar assistindo como ${profileName}` : 'Continuar Assistindo'}
       </h2>
       <div className="flex gap-2 overflow-x-auto hide-scrollbar px-4 md:px-12 pb-2">
@@ -31,27 +32,30 @@ export default function ContinueWatching({ history, episodes, allSeries, profile
             to={`/Player?episodeId=${item.episode.id}`}
             className="shrink-0 w-[240px] md:w-[280px] group relative"
           >
-            <div className="relative aspect-video rounded-sm overflow-hidden bg-[#1A1A1A]">
+            <div className="relative aspect-video rounded-sm overflow-hidden bg-member-elevated/90 ring-1 ring-white/5">
               {item.episode.thumbnail_url || item.series.cover_url ? (
                 <img
-                  src={item.episode.thumbnail_url || item.series.cover_url}
+                  src={publicAssetUrl(item.episode.thumbnail_url || item.series.cover_url)}
                   alt=""
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-[#E50914]/20 to-[#1A1A1A] flex items-center justify-center">
+                <div className="w-full h-full bg-gradient-to-br from-neon-fuchsia/25 to-[#050508] flex items-center justify-center">
                   <Play className="w-10 h-10 text-white/40" />
                 </div>
               )}
               {/* Dark overlay on hover with play button */}
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
-                  <Play className="w-5 h-5 text-black fill-current ml-0.5" />
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-neon-fuchsia to-neon-cyan flex items-center justify-center shadow-[0_0_24px_-4px_rgba(232,121,249,0.6)]">
+                  <Play className="w-5 h-5 text-white fill-current ml-0.5" />
                 </div>
               </div>
               {/* Progress bar - Netflix style red thick bar at bottom */}
               <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gray-600/80">
-                <div className="h-full bg-[#E50914]" style={{ width: `${item.progress}%` }} />
+                <div
+                  className="h-full bg-gradient-to-r from-neon-fuchsia to-neon-cyan"
+                  style={{ width: `${item.progress}%` }}
+                />
               </div>
             </div>
             {/* Series title below with episode info */}

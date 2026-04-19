@@ -20,6 +20,15 @@ export const SS_MOCK_ADMIN_SESSION = 'terrorflix_mock_admin_session';
 /** Metadado: último autosave do catálogo (ISO string) */
 export const LS_LAST_CATALOG_SAVE = 'desenhosflix_last_catalog_save';
 
+/** Presets de nomes de categoria (filmes/séries) criados no admin — JSON string[] */
+export const LS_ADMIN_CATEGORY_PRESETS = 'desenhosflix_admin_category_presets';
+
+/** Ordem dos slugs das fileiras na home — JSON string[] (padrão + `cat-*` personalizados) */
+export const LS_HOME_NETFLIX_ROW_SLUG_ORDER = 'desenhosflix_home_netflix_row_slug_order';
+
+/** Fileiras extra na home — JSON `{ slug, label }[]` (categorias criadas no admin) */
+export const LS_HOME_CUSTOM_CATEGORY_ROWS = 'desenhosflix_home_custom_category_rows';
+
 /** Nomes das tabelas persistidas pelo mock (localMockClient) */
 export const MOCK_TABLE_NAMES = [
   'Series',
@@ -48,5 +57,8 @@ export function getAllCatalogStorageKeys() {
     LS_SERIES_SEED_TOMBSTONES,
     LS_ACTIVE_PROFILE,
     LS_SUBSCRIPTION_DEMO,
+    LS_ADMIN_CATEGORY_PRESETS,
+    LS_HOME_NETFLIX_ROW_SLUG_ORDER,
+    LS_HOME_CUSTOM_CATEGORY_ROWS,
   ];
 }

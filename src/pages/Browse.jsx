@@ -2,11 +2,11 @@ import React, { useMemo, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Play, Filter, Clock } from 'lucide-react';
+import { Play, Filter } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { CONTENT_TYPE_MOVIE, hasPlayableVideoLink } from '@/constants/contentType';
 import { catalogItemMatchesCategoryLabel } from '@/lib/categoryFilter';
-import { SLUG_TO_LABEL } from '@/data/netflixRowOrder';
+import { getSlugToLabelMap } from '@/lib/homeRowOrderPreference';
 import { rowMatchesItem } from '@/lib/netflixHomeRows';
 import { imageUrlWithCacheBust } from '@/lib/imageCacheBust';
 import { seriesDetailHref } from '@/lib/seriesRoutes';
@@ -61,7 +61,7 @@ export default function Browse() {
     let rows = byCatalogType;
 
     if (sectionParam) {
-      const label = SLUG_TO_LABEL[sectionParam];
+      const label = getSlugToLabelMap()[sectionParam];
       if (label) {
         rows = rows.filter((s) => rowMatchesItem(s, label));
       }
@@ -185,16 +185,6 @@ export default function Browse() {
                       <span className="absolute top-2 left-2 text-[10px] font-bold uppercase bg-black/70 text-white px-2 py-0.5 rounded">
                         Filme
                       </span>
-                    )}
-                    {!canPlay && (
-                      <div className="absolute inset-0 bg-black/60 flex items-end justify-center pb-4 pointer-events-none">
-                        <div className="flex flex-col items-center gap-1 px-2 text-center">
-                          <Clock className="w-4 h-4 text-[#FFC107]" />
-                          <span className="text-[10px] md:text-xs font-bold text-[#FFC107] leading-tight">
-                            EM BREVE
-                          </span>
-                        </div>
-                      </div>
                     )}
                     {canPlay && (
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">

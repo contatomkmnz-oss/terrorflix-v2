@@ -2,9 +2,9 @@
  * Converte modelos Prisma para o formato legado `Series` / `Episode` / `FeaturedBanner` do front.
  */
 
-const DEFAULT_POSTER = '/images/banners/poster-movie.svg';
-const DEFAULT_BANNER = '/images/banners/hero-slide-1.svg';
-const DEFAULT_HERO_IMAGE = '/images/banners/hero-slide-2.svg';
+const DEFAULT_POSTER = '/imagens/banners/poster-movie.svg';
+const DEFAULT_BANNER = '/imagens/banners/hero-slide-1.svg';
+const DEFAULT_HERO_IMAGE = '/imagens/banners/hero-slide-2.svg';
 
 function urlOrDefault(value, fallback) {
   if (value == null) return fallback;
@@ -99,6 +99,11 @@ export function heroToFeaturedBanner(hb) {
     description: hb.description,
     image: urlOrDefault(hb.image, DEFAULT_HERO_IMAGE),
     custom_url: hb.customUrl,
+    detail_url: hb.detailUrl || '',
+    banner_object_position: hb.bannerObjectPosition || 'center center',
+    hero_year: hb.heroYear || '',
+    hero_rating: hb.heroRating || '',
+    hero_category: hb.heroCategory || '',
   };
 }
 

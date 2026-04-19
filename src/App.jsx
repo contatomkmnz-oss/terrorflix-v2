@@ -28,6 +28,7 @@ import AdminSubscriptions from './pages/admin/AdminSubscriptions';
 import AdminMetrics from './pages/admin/AdminMetrics';
 import AdminBanner from './pages/admin/AdminBanner';
 import AdminPersistence from './pages/admin/AdminPersistence';
+import AdminCategories from './pages/admin/AdminCategories';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminGate from './components/admin/AdminGate';
 import Subscription from './pages/Subscription';
@@ -41,8 +42,8 @@ const AuthenticatedApp = () => {
       <div className="fixed inset-0 flex items-center justify-center bg-[#0F0F0F]">
         <div className="text-center">
           <h1 className="text-3xl font-black mb-4">
-            <span className="text-[#E50914]">Terror</span>
-            <span className="text-[#FFC107]">Flix</span>
+            <span className="text-[#E50914]">BailaFit</span>
+            <span className="text-[#FFC107]"> Dance</span>
           </h1>
           <div className="w-8 h-8 border-2 border-[#E50914] border-t-transparent rounded-full animate-spin mx-auto"></div>
         </div>
@@ -90,6 +91,7 @@ const AuthenticatedApp = () => {
           <Route path="/AdminMetrics" element={<AdminMetrics />} />
           <Route path="/AdminBanner" element={<AdminBanner />} />
           <Route path="/AdminPersistence" element={<AdminPersistence />} />
+          <Route path="/AdminCategories" element={<AdminCategories />} />
         </Route>
       </Route>
       

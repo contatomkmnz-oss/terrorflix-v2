@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
         }
       } catch (e) {
         if (import.meta.env.DEV) {
-          console.warn('[TerrorFlix] auth.me', e);
+          console.warn('[BailaFit] auth.me', e);
         }
         if (!cancelled) {
           setUser(null);
@@ -53,7 +53,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const navigateToLogin = () => {
-    console.info('[TerrorFlix] Login externo não usado no modo local.');
+    console.info('[BailaFit] Login externo não usado no modo local.');
   };
 
   const checkAppState = async () => {
@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }) => {
       setAuthError(null);
     } catch (e) {
       if (import.meta.env.DEV) {
-        console.warn('[TerrorFlix] checkAppState', e);
+        console.warn('[BailaFit] checkAppState', e);
       }
     }
   };

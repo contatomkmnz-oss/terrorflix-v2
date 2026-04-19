@@ -16,10 +16,10 @@ const TAB_ROUTES = ['/Home', '/Browse', '/Search', '/MyList', '/Subscription'];
 const STACK_ROUTES = ['/SeriesDetail', '/Player', '/movie', '/series'];
 
 // Rotas que NÃO precisam de assinatura ativa
-const FREE_ROUTES = ['/Subscription', '/ActivateCode', '/ProfileSelect', '/Admin', '/AdminSeries', '/AdminEpisodes', '/AdminUsers', '/AdminCodes', '/AdminProposals', '/AdminAvatars', '/AdminEpisodeCreator', '/AdminSubscriptions', '/AdminMetrics', '/AdminBanner', '/AdminPersistence'];
+const FREE_ROUTES = ['/Subscription', '/ActivateCode', '/ProfileSelect', '/Admin', '/AdminSeries', '/AdminEpisodes', '/AdminUsers', '/AdminCodes', '/AdminProposals', '/AdminAvatars', '/AdminEpisodeCreator', '/AdminSubscriptions', '/AdminMetrics', '/AdminBanner', '/AdminPersistence', '/AdminCategories'];
 
 // Rotas que NÃO precisam de perfil ativo (admin e perfil select em si)
-const NO_PROFILE_ROUTES = ['/ProfileSelect', '/AdminLogin', '/Admin', '/AdminSeries', '/AdminEpisodes', '/AdminUsers', '/AdminCodes', '/AdminProposals', '/AdminAvatars', '/AdminEpisodeCreator', '/AdminSubscriptions', '/AdminMetrics', '/AdminBanner', '/AdminPersistence', '/Subscription', '/ActivateCode'];
+const NO_PROFILE_ROUTES = ['/ProfileSelect', '/AdminLogin', '/Admin', '/AdminSeries', '/AdminEpisodes', '/AdminUsers', '/AdminCodes', '/AdminProposals', '/AdminAvatars', '/AdminEpisodeCreator', '/AdminSubscriptions', '/AdminMetrics', '/AdminBanner', '/AdminPersistence', '/AdminCategories', '/Subscription', '/ActivateCode'];
 
 export default function AppLayout() {
   const [subState, setSubState] = useState(null); // null = loading
@@ -87,7 +87,7 @@ export default function AppLayout() {
   // Loading
   if (subState === null) {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] text-white">
+      <div className="min-h-screen bg-[#050508] text-white">
         <Navbar />
         <div className="flex items-center justify-center min-h-[80vh]">
           <div className="w-8 h-8 border-2 border-[#E50914] border-t-transparent rounded-full animate-spin" />
@@ -102,7 +102,7 @@ export default function AppLayout() {
   const showWall = !isFreeRoute && !isAdmin && !isActive;
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white">
+    <div className="min-h-screen bg-[#050508] text-white">
       <Navbar isStackRoute={isStackRoute} />
       {showWall ? (
         <SubscriptionWall isTrial={isTrial} />

@@ -2,6 +2,7 @@ import {
   getAllCatalogStorageKeys,
   LS_LAST_CATALOG_SAVE,
 } from '@/config/storageKeys';
+import { mockTableCacheClearAll } from '@/api/mockTableReadCache';
 
 /** Versão do formato JSON de backup / ficheiro em disco. */
 export const CATALOG_BACKUP_SCHEMA_VERSION = 2;
@@ -18,7 +19,7 @@ async function postCatalogSnapshotToDisk() {
       body: JSON.stringify(snap),
     });
     if (!res.ok && res.status !== 404) {
-      console.warn('[TerrorFlix] Autosave para data/catalog-backup.json falhou', res.status);
+      console.warn('[BailaFit] Autosave para data/catalog-backup.json falhou', res.status);
     }
   } catch (e) {
     /* Sem servidor local (ex.: ficheiros estáticos) — só localStorage. */
@@ -84,6 +85,7 @@ export function applyCatalogSnapshot(raw) {
     else safeLsSet(k, JSON.stringify(val));
   }
 
+  mockTableCacheClearAll();
   touchLastSaved();
 }
 
@@ -121,7 +123,7 @@ export function downloadCatalogBackupJson() {
   const blob = new Blob([JSON.stringify(snap, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `terrorflix-catalog-backup-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+  a.download = `members-bailafit-catalog-backup-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
   a.click();
   URL.revokeObjectURL(a.href);
 }

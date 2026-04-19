@@ -2,10 +2,13 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Play, SkipForward, List, X } from 'lucide-react';
+import { ArrowLeft, Play, SkipForward, List, X, Lock } from 'lucide-react';
 import { getVideoEmbedUrl } from '@/lib/videoEmbed';
 import { isMovie, getMovieStreamUrl } from '@/constants/contentType';
 import { readActiveProfile } from '@/lib/activeProfile';
+import { publicAssetUrl } from '@/lib/publicAssetUrl';
+import { CATALOG_PREMIUM_UNLOCK_HREF, isPremiumCatalogLocked, formatPremiumUnlockCta } from '@/lib/catalogPremiumLock';
+import { formatMediaDurationSeconds } from '@/lib/formatMediaDuration';
 
 export default function Player() {
   const params = new URLSearchParams(window.location.search);
@@ -38,19 +41,23 @@ export default function Player() {
     enabled: !!seriesIdForQuery,
   });
 
-  const isMoviePlayback = Boolean(
-    seriesIdParam && !episodeId && series && isMovie(series) && getMovieStreamUrl(series)
-  );
-
-  const episodeSeriesId = episode?.series_id;
-  const { data: allEpisodes = [] } = useQuery({
-    queryKey: ['seriesEpisodes', episodeSeriesId],
+  /** Filmes: permite URL em `movie_url` ou no episódio (`video_url`). */
+  const sidForEps = episode?.series_id ?? seriesIdParam ?? null;
+  const { data: allEpisodes = [], isPending: episodesPending } = useQuery({
+    queryKey: ['seriesEpisodes', sidForEps],
     queryFn: () =>
-      episodeSeriesId
-        ? base44.entities.Episode.filter({ series_id: episodeSeriesId })
-        : Promise.resolve([]),
-    enabled: !!episodeSeriesId && !isMoviePlayback,
+      sidForEps ? base44.entities.Episode.filter({ series_id: sidForEps }) : Promise.resolve([]),
+    enabled: !!sidForEps,
   });
+
+  const movieStreamResolved = useMemo(() => {
+    if (!series || !isMovie(series)) return '';
+    return getMovieStreamUrl(series, allEpisodes);
+  }, [series, allEpisodes]);
+
+  const isMoviePlayback = Boolean(
+    seriesIdParam && !episodeId && series && isMovie(series) && movieStreamResolved
+  );
 
   const { data: existingHistory = [] } = useQuery({
     queryKey: ['watchHistoryEp', activeProfile?.id, episodeId],
@@ -89,13 +96,13 @@ export default function Player() {
 
   const embedUrl = useMemo(() => {
     if (isMoviePlayback) {
-      return getVideoEmbedUrl(getMovieStreamUrl(series));
+      return getVideoEmbedUrl(getMovieStreamUrl(series, allEpisodes));
     }
     return getVideoEmbedUrl(episode?.video_url);
-  }, [isMoviePlayback, series, episode?.video_url]);
+  }, [isMoviePlayback, series, allEpisodes, episode?.video_url]);
 
-  const isBunnyStream = embedUrl?.type === 'bunny-stream';
-  const isBunnyPlayer = embedUrl?.type === 'bunny-player';
+  /** Só ficheiros / streams directos no elemento <video>; resto (Bunny iframe, YouTube, URL genérica) em <iframe>. */
+  const useNativeVideo = embedUrl?.type === 'bunny-stream';
   const mediaKey = isMoviePlayback ? `movie-${seriesIdParam}` : episodeId;
 
   // Autoplay on episode end (só fluxo por episódio)
@@ -139,14 +146,43 @@ export default function Player() {
     }
   };
 
+  const needsEpisodeUrlFallback =
+    !!seriesIdParam &&
+    !episodeId &&
+    series &&
+    isMovie(series) &&
+    !String(series.movie_url || '').trim();
+
   const waiting =
     (!!episodeId && episodeLoading) ||
-    (!!seriesIdForQuery && seriesLoading);
+    (!!seriesIdForQuery && seriesLoading) ||
+    (needsEpisodeUrlFallback && episodesPending);
 
   if (waiting) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-[#E50914] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (series && isPremiumCatalogLocked(series)) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center px-4 text-center max-w-md mx-auto">
+        <Lock className="w-14 h-14 text-[#FFC107] mb-4" strokeWidth={2} />
+        <h1 className="text-xl font-bold text-white mb-2">Conteúdo bloqueado</h1>
+        <p className="text-gray-400 text-sm mb-6">
+          Este título faz parte do catálogo premium. {formatPremiumUnlockCta(series)} na área de membros.
+        </p>
+        <Link
+          to={CATALOG_PREMIUM_UNLOCK_HREF}
+          className="mb-4 px-6 py-2.5 rounded-lg bg-[#FFC107] text-black font-bold text-sm hover:bg-[#FFD54F] transition-colors"
+        >
+          Ver planos
+        </Link>
+        <button type="button" onClick={() => navigate(-1)} className="text-[#E50914] hover:underline text-sm">
+          Voltar
+        </button>
       </div>
     );
   }
@@ -175,7 +211,9 @@ export default function Player() {
         <p className="mb-2">
           Este título não tem <strong className="text-white">URL do filme</strong> configurada, ou não é um filme.
         </p>
-        <p className="text-sm text-gray-500 mb-4">Define a URL em Admin → Séries e Filmes (filme).</p>
+        <p className="text-sm text-gray-500 mb-4">
+          Define a URL em Admin → Séries e Filmes (URL do filme) ou em Admin → Episódios (URL do vídeo).
+        </p>
         <button type="button" onClick={() => navigate(-1)} className="text-[#E50914] hover:underline">Voltar</button>
       </div>
     );
@@ -197,6 +235,9 @@ export default function Player() {
       </div>
     );
   }
+
+  const episodeDurationLabel =
+    !isMoviePlayback && episode ? formatMediaDurationSeconds(episode.duration) : null;
 
   return (
     <div className="min-h-screen bg-black">
@@ -235,23 +276,7 @@ export default function Player() {
         {/* Video */}
         <div className="w-full aspect-video bg-black flex items-center justify-center relative">
           {embedUrl ? (
-            isBunnyPlayer ? (
-              <iframe
-                key={mediaKey}
-                src={embedUrl.url}
-                className="w-full h-full"
-                frameBorder="0"
-                scrolling="no"
-                allow="autoplay; encrypted-media; fullscreen; picture-in-picture; gyroscope; accelerometer"
-                allowFullScreen
-                webkitallowfullscreen="true"
-                mozallowfullscreen="true"
-                {...{
-                  'x5-playsinline': 'true',
-                  'x5-video-player-fullscreen': 'true',
-                }}
-              />
-            ) : isBunnyStream ? (
+            useNativeVideo ? (
               <video
                 key={mediaKey}
                 src={embedUrl.url}
@@ -281,11 +306,12 @@ export default function Player() {
             ) : (
               <iframe
                 key={mediaKey}
+                title="Reprodutor de vídeo"
                 src={embedUrl.url}
                 className="w-full h-full"
                 frameBorder="0"
                 scrolling="no"
-                allow="autoplay; encrypted-media; fullscreen; picture-in-picture; gyroscope; accelerometer"
+                allow="autoplay; encrypted-media; fullscreen; picture-in-picture; gyroscope; accelerometer; clipboard-write"
                 allowFullScreen
                 webkitallowfullscreen="true"
                 mozallowfullscreen="true"
@@ -302,7 +328,7 @@ export default function Player() {
                 {isMoviePlayback ? 'Nenhum vídeo disponível para este filme.' : 'Nenhum vídeo disponível para este episódio.'}
               </p>
               <p className="text-xs text-gray-600 mt-2">
-                Use uma URL Bunny (Stream iframe ou CDN .mp4), Google Drive ou MP4 público. Ver docs/bunny-net.md
+                Cola qualquer URL HTTPS de vídeo (Bunny, YouTube, Vimeo, .mp4, .m3u8, Drive, página de embed, etc.).
               </p>
             </div>
           )}
@@ -344,7 +370,7 @@ export default function Player() {
               >
                 <div className="shrink-0 w-24 aspect-video rounded overflow-hidden bg-[#2A2A2A]">
                   {(ep.thumbnail_url || series?.cover_url) ? (
-                    <img src={ep.thumbnail_url || series?.cover_url} alt="" className="w-full h-full object-cover" />
+                    <img src={publicAssetUrl(ep.thumbnail_url || series?.cover_url)} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center"><Play className="w-4 h-4 text-gray-600" /></div>
                   )}
@@ -373,7 +399,9 @@ export default function Player() {
             <div className="flex items-center gap-3 text-sm text-gray-400 mb-4">
               <span>Temporada {episode.season || 1}</span>
               <span>Episódio {episode.number}</span>
-              {episode.duration && <span>{Math.floor(episode.duration / 60)} min</span>}
+              {episodeDurationLabel && (
+                <span className="tabular-nums">{episodeDurationLabel}</span>
+              )}
             </div>
             {episode.description && <p className="text-gray-300 leading-relaxed">{episode.description}</p>}
 

@@ -51,13 +51,13 @@ export async function hydrateCatalogBootstrap() {
     try {
       data = JSON.parse(text);
     } catch (e) {
-      console.warn('[TerrorFlix] Ficheiro catalog-backup.json inválido', e);
+      console.warn('[BailaFit] Ficheiro catalog-backup.json inválido', e);
       return;
     }
 
     const v = validateCatalogSnapshot(data);
     if (!v.ok) {
-      console.warn('[TerrorFlix] Backup em disco ignorado:', v.error);
+      console.warn('[BailaFit] Backup em disco ignorado:', v.error);
       return;
     }
 
@@ -74,6 +74,6 @@ export async function hydrateCatalogBootstrap() {
       return;
     }
   } catch (e) {
-    console.warn('[TerrorFlix] Hidratação a partir de data/catalog-backup.json ignorada', e);
+    console.warn('[BailaFit] Hidratação a partir de data/catalog-backup.json ignorada', e);
   }
 }

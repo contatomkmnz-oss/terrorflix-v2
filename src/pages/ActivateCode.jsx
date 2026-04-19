@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Key, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { brand } from '@/data/siteContent';
+import { publicAssetUrl } from '@/lib/publicAssetUrl';
 
 export default function ActivateCode() {
   const navigate = useNavigate();
@@ -55,27 +57,30 @@ export default function ActivateCode() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="members-area flex items-center justify-center p-4">
+      <div className="members-area-bg" aria-hidden />
+      <div className="members-area-inner w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-black mb-2">
-            <span className="text-[#E50914]">Terror</span>
-            <span className="text-[#FFC107]">Flix</span>
-          </h1>
-          <p className="text-gray-400">Ative sua conta com um código de acesso</p>
+          <img
+            src={publicAssetUrl(brand.logoUrl)}
+            alt={brand.name}
+            className="h-14 w-auto mx-auto mb-4 object-contain drop-shadow-[0_0_20px_rgba(232,121,249,0.35)]"
+          />
+          <h1 className="text-2xl font-black mb-2 members-heading-gradient">Ativar conta</h1>
+          <p className="text-gray-400 text-sm">Use o código de acesso do seu plano</p>
         </div>
 
-        <div className="bg-[#1A1A1A] rounded-xl p-6 border border-white/5">
+        <div className="members-neon-card rounded-xl p-6">
           {success ? (
             <div className="text-center py-4">
-              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+              <CheckCircle className="w-16 h-16 text-neon-lime mx-auto mb-4 drop-shadow-[0_0_16px_rgba(74,222,128,0.5)]" />
               <h2 className="text-xl font-bold mb-2">Conta Ativada!</h2>
               <p className="text-gray-400">Redirecionando...</p>
             </div>
           ) : (
             <>
-              <div className="flex items-center gap-3 mb-6 p-3 bg-[#2A2A2A] rounded-lg">
-                <Key className="w-5 h-5 text-[#FFC107]" />
+              <div className="flex items-center gap-3 mb-6 p-3 rounded-lg bg-member-surface/80 border border-neon-violet/20">
+                <Key className="w-5 h-5 text-neon-cyan shrink-0" />
                 <p className="text-sm text-gray-300">
                   Insira o código de acesso que você recebeu ao adquirir o plano.
                 </p>
@@ -99,7 +104,7 @@ export default function ActivateCode() {
               <Button
                 onClick={handleActivate}
                 disabled={loading || !code.trim()}
-                className="w-full bg-[#E50914] hover:bg-[#FF3D3D] py-3 text-base"
+                className="w-full py-3 text-base border-0 bg-gradient-to-r from-neon-fuchsia via-neon-magenta to-neon-cyan text-white hover:opacity-95 shadow-[0_0_24px_-6px_rgba(232,121,249,0.45)]"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Ativar Código'}
               </Button>

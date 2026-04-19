@@ -4,7 +4,7 @@
   "framework": null,
   "rewrites": [
     {
-      "source": "/((?!api/|images/|assets/|manifest\\.json|favicon\\.ico|robots\\.txt).*)",
+      "source": "/((?!api/|imagens/|images/|capas/|assets/|manifest\\.json|favicon\\.ico|robots\\.txt).*)",
       "destination": "/index.html"
     }
   ]

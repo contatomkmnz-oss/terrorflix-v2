@@ -12,14 +12,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import ImageUpload from '@/components/admin/ImageUpload';
 import { CONTENT_TYPE_MOVIE, CONTENT_TYPE_SERIES } from '@/constants/contentType';
 import { HOME_SECTION_SELECT_NONE } from '@/data/siteContent';
-import { NETFLIX_HOME_ROW_ORDER } from '@/data/netflixRowOrder';
+import {
+  isHomeCatalogSlug,
+  seriesQualifiesForHomeCatalogEpisodes,
+  getEffectiveNetflixHomeRowOrder,
+  getSlugToLabelMap,
+} from '@/lib/homeRowOrderPreference';
 import { toast } from 'sonner';
+import { publicAssetUrl } from '@/lib/publicAssetUrl';
 
 export default function AdminSeries() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [listFilter, setListFilter] = useState('all'); // all | series | movie
+  /** home_catalog = só títulos que entram numa das 5 fileiras da home e com capa (catálogo editorial). */
+  const [listFilter, setListFilter] = useState('home_catalog'); // home_catalog | all | series | movie
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -150,6 +157,10 @@ export default function AdminSeries() {
   const filteredList = series.filter((s) => {
     if (listFilter === 'series') return s.content_type !== CONTENT_TYPE_MOVIE;
     if (listFilter === 'movie') return s.content_type === CONTENT_TYPE_MOVIE;
+    if (listFilter === 'home_catalog') {
+      const hasCover = String(s.cover_url || '').trim() !== '';
+      return hasCover && seriesQualifiesForHomeCatalogEpisodes(s);
+    }
     return true;
   });
 
@@ -173,6 +184,7 @@ export default function AdminSeries() {
 
         <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
           {[
+            { id: 'home_catalog', label: 'Na home' },
             { id: 'all', label: 'Todos' },
             { id: 'series', label: 'Séries' },
             { id: 'movie', label: 'Filmes' },
@@ -195,7 +207,7 @@ export default function AdminSeries() {
             <div key={s.id} className="flex items-center gap-4 p-4 bg-[#1A1A1A] rounded-lg hover:bg-[#222] transition-colors">
               <div className="shrink-0 w-16 h-24 rounded overflow-hidden bg-[#2A2A2A]">
                 {s.cover_url ? (
-                  <img src={s.cover_url} alt="" className="w-full h-full object-cover" />
+                  <img src={publicAssetUrl(s.cover_url)} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-xs text-gray-500">{s.title?.[0]}</div>
                 )}
@@ -209,8 +221,12 @@ export default function AdminSeries() {
                   {s.featured && <Star className="w-4 h-4 text-[#FFC107] fill-current shrink-0" />}
                   {!s.published && <EyeOff className="w-4 h-4 text-gray-500 shrink-0" />}
                 </div>
-                <p className="text-xs text-gray-400 mt-1">
-                  {(Array.isArray(s.categories) ? s.categories.join(', ') : s.category) || '—'} • {s.year} • {s.age_rating}
+                <p className="text-xs text-gray-400 mt-1 truncate">
+                  {s.content_type === CONTENT_TYPE_MOVIE
+                    ? (Array.isArray(s.categories) ? s.categories.join(', ') : s.category) || 'Filme'
+                    : isHomeCatalogSlug(s.highlighted_home_section)
+                      ? getSlugToLabelMap()[s.highlighted_home_section] || s.highlighted_home_section
+                      : (s.category || 'Sem secção na home')}
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -266,10 +282,10 @@ export default function AdminSeries() {
                 <div className="rounded-lg border border-[#E50914]/40 bg-[#E50914]/5 p-4 space-y-2">
                   <p className="text-xs font-semibold text-[#E50914] uppercase tracking-wide">URL do filme</p>
                   <p className="text-[11px] text-gray-400 leading-snug">
-                    Cole a URL do vídeo (Bunny, Drive ou MP4). Este campo é só para filmes e não substitui episódios de séries.
+                    Opcional se já tiveres URL em Admin → Episódios. Prioridade: este campo; senão usa o 1.º episódio com URL.
                   </p>
                   <Input
-                    placeholder="https://…"
+                    placeholder="https://… (Bunny, YouTube, Vimeo, MP4, m3u8, embed…)"
                     value={form.movie_url}
                     onChange={(e) => setForm({ ...form, movie_url: e.target.value })}
                     className="bg-[#141414] border border-white/10 font-mono text-sm"
@@ -282,7 +298,7 @@ export default function AdminSeries() {
                 <div>
                   <p className="text-xs text-gray-400 mb-1">Categorias Netflix (uma por linha — mesmo filme em várias fileiras)</p>
                   <Textarea
-                    placeholder={'Mais Assistidos\nDestaques\nSlashers'}
+                    placeholder={'Começar rápido\nTreinos principais\nDança'}
                     value={form.categoriesText}
                     onChange={(e) => setForm({ ...form, categoriesText: e.target.value })}
                     className="bg-[#2A2A2A] border-none min-h-[120px] font-mono text-sm"
@@ -290,7 +306,7 @@ export default function AdminSeries() {
                 </div>
               ) : (
                 <Input
-                  placeholder="Categorias (ex: Terror, Comédia)"
+                  placeholder="Categorias (ex: Dança, HIIT)"
                   value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
                   className="bg-[#2A2A2A] border-none"
@@ -349,7 +365,7 @@ export default function AdminSeries() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={HOME_SECTION_SELECT_NONE}>Nenhuma seção especial</SelectItem>
-                  {NETFLIX_HOME_ROW_ORDER.map(({ slug, label }) => (
+                  {getEffectiveNetflixHomeRowOrder().map(({ slug, label }) => (
                     <SelectItem key={slug} value={slug}>
                       {label}
                     </SelectItem>

@@ -1,5 +1,5 @@
 import { isMovie } from '@/constants/contentType';
-import { LABEL_TO_SLUG } from '@/data/netflixRowOrder';
+import { getLabelToSlugMap } from '@/lib/homeRowOrderPreference';
 import { normalizeHighlightSection } from '@/lib/maisAssistidos';
 import { catalogItemMatchesCategoryLabel } from '@/lib/categoryFilter';
 
@@ -30,7 +30,7 @@ export function rowMatchesItem(s, rowLabel) {
     return movieHasCategory(s, label);
   }
 
-  const slug = LABEL_TO_SLUG[label];
+  const slug = getLabelToSlugMap()[label];
   if (slug && normalizeHighlightSection(s.highlighted_home_section) === slug) {
     return true;
   }

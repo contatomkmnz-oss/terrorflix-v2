@@ -66,9 +66,9 @@ export default function CheckoutModal({ plan, onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="bg-[#1A1A1A] rounded-2xl border border-white/10 w-full max-w-md shadow-2xl">
-        <div className="flex items-center justify-between p-5 border-b border-white/5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4">
+      <div className="members-neon-card rounded-2xl w-full max-w-md">
+        <div className="flex items-center justify-between p-5 border-b border-neon-violet/15">
           <div>
             <h2 className="text-white font-bold text-lg">Finalizar Assinatura</h2>
             <p className="text-sm text-gray-400">
@@ -76,7 +76,7 @@ export default function CheckoutModal({ plan, onClose, onSuccess }) {
               {plan.period}
             </p>
           </div>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-white">
+          <button type="button" onClick={onClose} className="text-gray-400 hover:text-neon-cyan transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -88,10 +88,10 @@ export default function CheckoutModal({ plan, onClose, onSuccess }) {
               <button
                 type="button"
                 onClick={() => handleSelectMethod('pix')}
-                className="w-full flex items-center gap-4 p-4 rounded-xl border border-white/10 hover:border-green-500/50 hover:bg-green-500/5 transition-all"
+                className="w-full flex items-center gap-4 p-4 rounded-xl border border-neon-lime/25 hover:border-neon-lime/55 hover:bg-neon-lime/5 transition-all"
               >
-                <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
-                  <QrCode className="w-5 h-5 text-green-500" />
+                <div className="w-10 h-10 rounded-lg bg-neon-lime/15 flex items-center justify-center shadow-[0_0_16px_-4px_rgba(74,222,128,0.4)]">
+                  <QrCode className="w-5 h-5 text-neon-lime" />
                 </div>
                 <div className="text-left">
                   <p className="text-white font-semibold">PIX</p>
@@ -101,10 +101,10 @@ export default function CheckoutModal({ plan, onClose, onSuccess }) {
               <button
                 type="button"
                 onClick={() => handleSelectMethod('credit_card')}
-                className="w-full flex items-center gap-4 p-4 rounded-xl border border-white/10 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all"
+                className="w-full flex items-center gap-4 p-4 rounded-xl border border-neon-cyan/25 hover:border-neon-cyan/55 hover:bg-neon-cyan/5 transition-all"
               >
-                <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                  <CreditCard className="w-5 h-5 text-blue-400" />
+                <div className="w-10 h-10 rounded-lg bg-neon-cyan/15 flex items-center justify-center shadow-[0_0_16px_-4px_rgba(34,211,238,0.4)]">
+                  <CreditCard className="w-5 h-5 text-neon-cyan" />
                 </div>
                 <div className="text-left">
                   <p className="text-white font-semibold">Cartão de Crédito</p>
@@ -146,7 +146,10 @@ export default function CheckoutModal({ plan, onClose, onSuccess }) {
                 >
                   Voltar
                 </Button>
-                <Button onClick={handleSubmit} className="flex-1 bg-[#E50914] hover:bg-[#FF3D3D]">
+                <Button
+                  onClick={handleSubmit}
+                  className="flex-1 border-0 bg-gradient-to-r from-neon-fuchsia via-neon-magenta to-neon-cyan text-white hover:opacity-95 shadow-[0_0_20px_-6px_rgba(232,121,249,0.5)]"
+                >
                   Continuar
                 </Button>
               </div>
@@ -155,15 +158,15 @@ export default function CheckoutModal({ plan, onClose, onSuccess }) {
 
           {step === 'processing' && (
             <div className="flex flex-col items-center py-10 gap-4">
-              <Loader2 className="w-10 h-10 animate-spin text-[#E50914]" />
+              <Loader2 className="w-10 h-10 animate-spin text-neon-cyan drop-shadow-[0_0_12px_rgba(34,211,238,0.6)]" />
               <p className="text-gray-300">Gerando sua cobrança...</p>
             </div>
           )}
 
           {step === 'demo' && (
             <div className="flex flex-col items-center gap-4 py-4 text-center">
-              <div className="w-16 h-16 rounded-full bg-[#E50914]/20 flex items-center justify-center">
-                <Sparkles className="w-8 h-8 text-[#FFC107]" />
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-neon-fuchsia/30 to-neon-cyan/25 flex items-center justify-center shadow-[0_0_24px_-6px_rgba(232,121,249,0.45)]">
+                <Sparkles className="w-8 h-8 text-neon-lime" />
               </div>
               <div>
                 <p className="text-white font-bold text-lg">Modo demonstração</p>
@@ -173,7 +176,7 @@ export default function CheckoutModal({ plan, onClose, onSuccess }) {
               <Button
                 type="button"
                 onClick={simulatePaidSubscription}
-                className="w-full bg-[#E50914] hover:bg-[#FF3D3D]"
+                className="w-full border-0 bg-gradient-to-r from-neon-fuchsia via-neon-magenta to-neon-cyan text-white hover:opacity-95"
               >
                 Simular assinatura ativa (local)
               </Button>
@@ -189,8 +192,8 @@ export default function CheckoutModal({ plan, onClose, onSuccess }) {
 
           {step === 'done' && billingUrl && (
             <div className="flex flex-col items-center gap-4 py-4 text-center">
-              <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center">
-                <QrCode className="w-8 h-8 text-green-500" />
+              <div className="w-16 h-16 rounded-full bg-neon-lime/15 flex items-center justify-center shadow-[0_0_20px_-6px_rgba(74,222,128,0.45)]">
+                <QrCode className="w-8 h-8 text-neon-lime" />
               </div>
               <div>
                 <p className="text-white font-bold text-lg">Cobrança gerada!</p>
@@ -200,7 +203,7 @@ export default function CheckoutModal({ plan, onClose, onSuccess }) {
                 </p>
               </div>
               <a href={billingUrl} target="_blank" rel="noopener noreferrer" className="w-full">
-                <Button className="w-full bg-[#E50914] hover:bg-[#FF3D3D] gap-2">
+                <Button className="w-full border-0 gap-2 bg-gradient-to-r from-neon-fuchsia via-neon-magenta to-neon-cyan text-white hover:opacity-95">
                   <ExternalLink className="w-4 h-4" />
                   Pagar Agora
                 </Button>

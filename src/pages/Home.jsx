@@ -1,25 +1,34 @@
-import React, { useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { footer as footerContent } from '@/data/siteContent';
-import { NETFLIX_HOME_ROW_ORDER } from '@/data/netflixRowOrder';
-import { heroBanners, normalizeHeroSlide } from '@/data/heroBanners';
+import { brand, footer as footerContent } from '@/data/siteContent';
+import { CONTINUE_WATCHING_HOME_KEY } from '@/data/netflixRowOrder';
+import {
+  getEffectiveHomePageRowSequence,
+  getEffectiveNetflixHomeRowOrder,
+  subscribeHomeRowOrder,
+} from '@/lib/homeRowOrderPreference';
+import { heroBanners, normalizeHeroSlide, featuredBannerToHeroSlide } from '@/data/heroBanners';
 import { seriesToHeroSlide } from '@/lib/heroFromSeries';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import HeroBanner from '../components/home/HeroBanner';
-import SeriesCarousel from '../components/home/SeriesCarousel';
 import NetflixHomeRow from '../components/home/NetflixHomeRow';
-import MovieAutoCarousel from '../components/home/MovieAutoCarousel';
 import ContinueWatching from '../components/home/ContinueWatching';
-import { CONTENT_TYPE_MOVIE } from '@/constants/contentType';
-import { catalogItemMatchesCategoryLabel } from '@/lib/categoryFilter';
-import { useShuffledMovies } from '@/hooks/useShuffledMovies';
 import { readActiveProfile } from '@/lib/activeProfile';
 
 export default function Home() {
-  const location = useLocation();
   const queryClient = useQueryClient();
   const activeProfile = readActiveProfile();
+  const [homeRowTick, setHomeRowTick] = useState(0);
+  useEffect(() => subscribeHomeRowOrder(() => setHomeRowTick((t) => t + 1)), []);
+
+  const homePageRowSequence = useMemo(
+    () => getEffectiveHomePageRowSequence(),
+    [homeRowTick]
+  );
+  const slugToNetflixRow = useMemo(
+    () => Object.fromEntries(getEffectiveNetflixHomeRowOrder().map((r) => [r.slug, r])),
+    [homeRowTick]
+  );
 
   const useRealApi = import.meta.env.VITE_USE_REAL_API === 'true';
 
@@ -89,14 +98,17 @@ export default function Home() {
 
   const myListIds = useMemo(() => myListItems.map(m => m.series_id), [myListItems]);
 
-  const toggleList = (seriesId) => {
-    if (!activeProfile?.id) return;
-    if (myListIds.includes(seriesId)) {
-      removeFromListMut.mutate(seriesId);
-    } else {
-      addToListMut.mutate(seriesId);
-    }
-  };
+  const toggleList = useCallback(
+    (seriesId) => {
+      if (!activeProfile?.id) return;
+      if (myListIds.includes(seriesId)) {
+        removeFromListMut.mutate(seriesId);
+      } else {
+        addToListMut.mutate(seriesId);
+      }
+    },
+    [activeProfile?.id, myListIds, removeFromListMut, addToListMut]
+  );
 
   const visibleSeries = activeProfile?.is_kid
     ? allSeries.filter(s => s.age_rating === 'Livre' || s.category?.toLowerCase().includes('infantil'))
@@ -107,86 +119,51 @@ export default function Home() {
     const fromAdmin = [...featuredBannerRows]
       .sort((a, b) => a.order - b.order)
       .map((b) => {
-        const series = seriesById[b.series_id];
-        if (!series) return null;
-        return seriesToHeroSlide(series, b.id);
+        const sid = (b.series_id || '').trim();
+        const series = sid ? seriesById[sid] : null;
+        if (series) return seriesToHeroSlide(series, b.id);
+        const hasCustom =
+          (b.image && String(b.image).trim()) ||
+          (b.title && String(b.title).trim()) ||
+          (b.description && String(b.description).trim());
+        if (hasCustom) return featuredBannerToHeroSlide(b);
+        return null;
       })
       .filter(Boolean);
     if (fromAdmin.length > 0) return fromAdmin;
     return heroBanners.map(normalizeHeroSlide);
   }, [featuredBannerRows, visibleSeries, heroBanners]);
 
-  const moviesSource = useMemo(
-    () => visibleSeries.filter((s) => s.content_type === CONTENT_TYPE_MOVIE),
-    [visibleSeries]
-  );
-
-  const moviesRow = useShuffledMovies(moviesSource, location.key);
-
-  const netflixLabels = useMemo(
-    () => new Set(NETFLIX_HOME_ROW_ORDER.map((r) => r.label)),
-    []
-  );
-
-  /** Géneros só em séries (campo texto) que não entram nas fileiras Netflix fixas — ex.: Comédia */
-  const extraSeriesGenreTokens = useMemo(() => {
-    const set = new Set();
-    visibleSeries.forEach((s) => {
-      if (s.content_type === CONTENT_TYPE_MOVIE) return;
-      if (!s.category) return;
-      s.category.split(',').forEach((c) => {
-        const t = c.trim();
-        if (t && !netflixLabels.has(t)) set.add(t);
-      });
-    });
-    return Array.from(set).sort((a, b) => a.localeCompare(b, 'pt-BR'));
-  }, [visibleSeries, netflixLabels]);
-
   return (
-    <div className="min-h-screen bg-[#0F0F0F]">
+    <div className="relative min-h-screen bg-[#050508] text-white">
+      <div className="home-browse-orbs" aria-hidden />
+      <div className="relative z-[1]">
       <HeroBanner slides={heroSlides} />
 
       <div className="-mt-10 md:-mt-20 relative z-10">
-        {NETFLIX_HOME_ROW_ORDER.map(({ slug, label }, rowIndex) => (
-          <NetflixHomeRow
-            key={slug}
-            slug={slug}
-            label={label}
-            rowIndex={rowIndex}
-            visibleSeries={visibleSeries}
-            myListIds={myListIds}
-            onToggleList={toggleList}
-            episodes={episodes}
-          />
-        ))}
-
-        <ContinueWatching history={history} episodes={episodes} allSeries={allSeries} profileName={activeProfile?.name} />
-
-        {moviesRow.length > 0 && (
-          <MovieAutoCarousel
-            key={`filmes-${moviesRow.map((m) => m.id).sort().join(',')}`}
-            title="Filmes"
-            showHeader
-            movies={moviesRow}
-            myListIds={myListIds}
-            onToggleList={toggleList}
-            browseTo="/Browse?type=movie"
-            episodes={episodes}
-            direction={NETFLIX_HOME_ROW_ORDER.length % 2 === 0 ? 'left' : 'right'}
-          />
-        )}
-
-        {extraSeriesGenreTokens.map((cat) => {
-          const catSeries = visibleSeries.filter((s) => catalogItemMatchesCategoryLabel(s, cat));
-          if (catSeries.length === 0) return null;
+        {homePageRowSequence.map((key, rowIndex) => {
+          if (key === CONTINUE_WATCHING_HOME_KEY) {
+            return (
+              <ContinueWatching
+                key={CONTINUE_WATCHING_HOME_KEY}
+                history={history}
+                episodes={episodes}
+                allSeries={allSeries}
+                profileName={activeProfile?.name}
+              />
+            );
+          }
+          const def = slugToNetflixRow[key];
+          if (!def) return null;
           return (
-            <SeriesCarousel
-              key={cat}
-              title={cat}
-              series={catSeries}
+            <NetflixHomeRow
+              key={def.slug}
+              slug={def.slug}
+              label={def.label}
+              rowIndex={rowIndex}
+              visibleSeries={visibleSeries}
               myListIds={myListIds}
               onToggleList={toggleList}
-              category={cat}
               episodes={episodes}
             />
           );
@@ -194,7 +171,7 @@ export default function Home() {
 
         {seriesError && (
           <div className="flex flex-col items-center justify-center py-24 px-4 max-w-lg mx-auto text-center">
-            <h2 className="text-xl font-bold mb-3 text-[#FFC107]">Catálogo indisponível</h2>
+            <h2 className="text-xl font-bold mb-3 members-heading-gradient">Catálogo indisponível</h2>
             <p className="text-gray-300 text-sm mb-4">
               O site não conseguiu buscar filmes na API. Isto costuma ser:{' '}
               <strong className="text-white">DATABASE_URL</strong> em falta ou errada na Vercel, ou o deploy foi feito
@@ -214,8 +191,8 @@ export default function Home() {
 
         {!seriesLoading && !seriesError && allSeries.length === 0 && (
           <div className="flex flex-col items-center justify-center py-32 px-4">
-            <div className="text-6xl mb-6">🎬</div>
-            <h2 className="text-2xl font-bold mb-2">Bem-vindo ao TerrorFlix!</h2>
+            <div className="text-6xl mb-6 drop-shadow-[0_0_24px_rgba(232,121,249,0.35)]">🎬</div>
+            <h2 className="text-2xl font-bold mb-2 members-heading-gradient">Bem-vindo ao {brand.name}!</h2>
             <p className="text-gray-400 text-center max-w-md">
               {useRealApi
                 ? 'Nenhum título publicado na base. Corre o seed na Neon (com a mesma DATABASE_URL da Vercel) ou adiciona conteúdo no painel admin.'
@@ -225,11 +202,12 @@ export default function Home() {
         )}
       </div>
 
-      <footer className="border-t border-white/5 mt-16 py-8 px-4 md:px-12 text-center text-xs text-gray-500">
+      <footer className="border-t border-neon-violet/15 mt-16 py-8 px-4 md:px-12 text-center text-xs text-gray-500">
         <p>
           &copy; {new Date().getFullYear()} {footerContent.copyright}
         </p>
       </footer>
+      </div>
     </div>
   );
 }

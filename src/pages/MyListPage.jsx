@@ -2,11 +2,12 @@ import React, { useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Play, X, Heart, Clock } from 'lucide-react';
+import { Play, X, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { readActiveProfile } from '@/lib/activeProfile';
 import { hasPlayableVideoLink } from '@/constants/contentType';
 import { seriesDetailHref } from '@/lib/seriesRoutes';
+import { publicAssetUrl } from '@/lib/publicAssetUrl';
 
 export default function MyListPage() {
   const queryClient = useQueryClient();
@@ -70,18 +71,10 @@ export default function MyListPage() {
                   <Link to={seriesDetailHref(s)}>
                     <div className="aspect-[2/3] rounded-lg overflow-hidden bg-[#1A1A1A] relative">
                       {s.cover_url ? (
-                        <img src={s.cover_url} alt={s.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <img src={publicAssetUrl(s.cover_url)} alt={s.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#E50914]/20 to-[#1A1A1A] p-2">
                           <span className="text-xs font-bold text-center">{s.title}</span>
-                        </div>
-                      )}
-                      {!canPlay && (
-                        <div className="absolute inset-0 bg-black/60 flex items-end justify-center pb-4 pointer-events-none">
-                          <div className="flex flex-col items-center gap-1 px-2 text-center">
-                            <Clock className="w-4 h-4 text-[#FFC107]" />
-                            <span className="text-[10px] md:text-xs font-bold text-[#FFC107] leading-tight">EM BREVE</span>
-                          </div>
                         </div>
                       )}
                       {canPlay && (

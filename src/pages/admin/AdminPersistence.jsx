@@ -9,20 +9,113 @@ import {
   downloadCatalogBackupJson,
   clearAllCatalogKeys,
   getLastSavedDisplay,
+  scheduleCatalogSync,
   CATALOG_BACKUP_SCHEMA_VERSION,
 } from '@/lib/catalogPersistence';
+import { mockTableKey } from '@/config/storageKeys';
+import { mockTableCacheClearAll } from '@/api/mockTableReadCache';
 import { useToast } from '@/components/ui/use-toast';
+
+function getEpisodeCorruptBackupInfo() {
+  if (typeof window === 'undefined') return { hasBackup: false, backupCount: 0, currentCount: 0 };
+  const key = mockTableKey('Episode');
+  const backupKey = `${key}_corrupt_backup`;
+  let currentCount = 0;
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      const p = JSON.parse(raw);
+      if (Array.isArray(p)) currentCount = p.length;
+    }
+  } catch {
+    /* ignore */
+  }
+  let backupCount = 0;
+  try {
+    const rawB = localStorage.getItem(backupKey);
+    if (rawB) {
+      const p = JSON.parse(rawB);
+      if (Array.isArray(p)) backupCount = p.length;
+    }
+  } catch {
+    /* ignore */
+  }
+  return {
+    hasBackup: backupCount > 0,
+    backupCount,
+    currentCount,
+    backupKey,
+  };
+}
 
 export default function AdminPersistence() {
   const { toast } = useToast();
   const fileRef = useRef(null);
   const [busy, setBusy] = useState(false);
+  const [epRecoverInfo, setEpRecoverInfo] = useState(() => getEpisodeCorruptBackupInfo());
 
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const [lastSaved, setLastSaved] = useState(() => getLastSavedDisplay());
   useEffect(() => {
     setLastSaved(getLastSavedDisplay());
   }, []);
+
+  const onMergeEpisodesFromCorruptBackup = () => {
+    const key = mockTableKey('Episode');
+    const backupKey = `${key}_corrupt_backup`;
+    const rawB = localStorage.getItem(backupKey);
+    if (!rawB) {
+      toast({
+        title: 'Sem cópia de episódios',
+        description: 'Não existe chave _corrupt_backup para Episode neste navegador.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    let backup;
+    try {
+      backup = JSON.parse(rawB);
+    } catch {
+      toast({ title: 'Cópia inválida', description: 'O JSON de segurança não pode ser lido.', variant: 'destructive' });
+      return;
+    }
+    if (!Array.isArray(backup)) {
+      toast({ title: 'Formato inesperado', description: 'Esperado um array de episódios.', variant: 'destructive' });
+      return;
+    }
+    let current = [];
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (Array.isArray(p)) current = p;
+      }
+    } catch {
+      current = [];
+    }
+    const byId = Object.fromEntries(current.filter((e) => e?.id).map((e) => [e.id, e]));
+    for (const e of backup) {
+      if (e?.id && !byId[e.id]) byId[e.id] = e;
+    }
+    const merged = Object.values(byId);
+    try {
+      localStorage.setItem(key, JSON.stringify(merged));
+      mockTableCacheClearAll();
+      scheduleCatalogSync();
+      setEpRecoverInfo(getEpisodeCorruptBackupInfo());
+      toast({
+        title: 'Episódios fundidos',
+        description: `${merged.length} episódios no catálogo após juntar a cópia de segurança. A recarregar…`,
+      });
+      window.setTimeout(() => window.location.reload(), 400);
+    } catch (e) {
+      toast({
+        title: 'Erro ao gravar',
+        description: String(e?.message || e),
+        variant: 'destructive',
+      });
+    }
+  };
 
   const onExport = () => {
     try {
@@ -99,7 +192,7 @@ export default function AdminPersistence() {
           </Link>
           <div>
             <h1 className="text-2xl font-bold">Backup do catálogo</h1>
-            <p className="text-gray-400 text-sm mt-1">Persistência local segura · TerrorFlix demo</p>
+            <p className="text-gray-400 text-sm mt-1">Persistência local segura · BailaFit Dance demo</p>
           </div>
         </div>
 
@@ -131,6 +224,38 @@ export default function AdminPersistence() {
               <strong className="text-amber-50">http://localhost:4173</strong> para desenvolvimento e preview
               (porta fixa no Vite). Modo anónimo ou limpar dados do site apaga o catálogo deste origem.
             </p>
+          </div>
+
+          <div className="rounded-xl border border-white/10 bg-[#141414] p-5 space-y-3">
+            <p className="font-semibold text-white">Episódios que sumiram</p>
+            <p className="text-sm text-gray-400 leading-relaxed">
+              Uma regra antiga do modo local podia apagar episódios ao recarregar a página — isso já foi corrigido,
+              mas <strong className="text-gray-200">não devolve automaticamente</strong> o que foi gravado em cima
+              do armazenamento. Só volta o que estiver num <strong className="text-gray-200">ficheiro de backup JSON</strong>{' '}
+              exportado antes (ou em <code className="text-xs bg-black/40 px-1">data/catalog-backup.json</code> de uma
+              máquina onde ainda exista).
+            </p>
+            {epRecoverInfo.hasBackup ? (
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-1">
+                <p className="text-sm text-gray-300">
+                  Foi encontrada uma cópia automática de segurança do JSON de episódios ({epRecoverInfo.backupCount}{' '}
+                  linhas). Pode tentar fundi-la com o catálogo actual ({epRecoverInfo.currentCount} episódios).
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-amber-500/50 text-amber-100 shrink-0"
+                  disabled={busy}
+                  onClick={onMergeEpisodesFromCorruptBackup}
+                >
+                  Fundir episódios da cópia de segurança
+                </Button>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-500">
+                Neste navegador não há <code className="bg-black/40 px-1">{mockTableKey('Episode')}_corrupt_backup</code>.
+              </p>
+            )}
           </div>
 
           <div className="rounded-xl border border-white/10 bg-[#1A1A1A] p-5 space-y-4">

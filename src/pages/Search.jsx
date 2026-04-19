@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Search as SearchIcon, X, TrendingUp, Play, Clock } from 'lucide-react';
+import { Search as SearchIcon, X, TrendingUp, Play } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { motion, AnimatePresence } from 'framer-motion';
 import { imageUrlWithCacheBust } from '@/lib/imageCacheBust';
@@ -116,14 +116,6 @@ export default function Search() {
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#E50914]/20 to-[#1A1A1A] p-2">
                       <span className="text-xs font-bold text-center">{s.title}</span>
-                    </div>
-                  )}
-                  {!canPlay && (
-                    <div className="absolute inset-0 bg-black/60 flex items-end justify-center pb-4 pointer-events-none">
-                      <div className="flex flex-col items-center gap-1 px-2 text-center">
-                        <Clock className="w-4 h-4 text-[#FFC107]" />
-                        <span className="text-[10px] md:text-xs font-bold text-[#FFC107] leading-tight">EM BREVE</span>
-                      </div>
                     </div>
                   )}
                   {canPlay && (

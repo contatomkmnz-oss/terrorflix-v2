@@ -2,7 +2,7 @@
 
 body {
   font-family: 'Inter', sans-serif;
-  background-color: #0F0F0F;
+  background-color: #050508;
   color: #FFFFFF;
 }
 
@@ -36,7 +36,7 @@ html {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0F0F0F;
+  background: #050508;
 }
 ::-webkit-scrollbar-thumb {
   background: #333;
@@ -55,13 +55,13 @@ html {
   scrollbar-width: none;
 }
 
-/* Faixas de filmes: loop contínuo (conteúdo duplicado no JSX). Direção oposta com .movie-marquee-track--reverse */
+/* Faixas de filmes: uma sequência por faixa (sem duplicar capas); loop com salto no reinício. Direção oposta com .movie-marquee-track--reverse */
 @keyframes movie-marquee-shift {
   from {
     transform: translate3d(0, 0, 0);
   }
   to {
-    transform: translate3d(-50%, 0, 0);
+    transform: translate3d(-100%, 0, 0);
   }
 }
 
@@ -96,4 +96,63 @@ html {
   .movie-marquee-track {
     animation-duration: 180s !important;
   }
+}
+
+/* Área de membros — fundo escuro + orbes neon (BailaFit Dance) */
+.members-area {
+  position: relative;
+  min-height: 100vh;
+  background-color: #050508;
+  color: #fafafa;
+  isolation: isolate;
+}
+
+.members-area-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 85% 55% at 8% -5%, rgba(236, 72, 153, 0.22) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 45% at 96% 8%, rgba(34, 211, 238, 0.18) 0%, transparent 52%),
+    radial-gradient(ellipse 75% 42% at 50% 102%, rgba(74, 222, 128, 0.14) 0%, transparent 48%);
+}
+
+.members-area-inner {
+  position: relative;
+  z-index: 1;
+}
+
+.members-neon-card {
+  background: rgba(16, 16, 24, 0.82);
+  border: 1px solid rgba(167, 139, 250, 0.22);
+  box-shadow:
+    0 0 0 1px rgba(34, 211, 238, 0.08),
+    0 20px 50px -20px rgba(0, 0, 0, 0.75);
+}
+
+.members-neon-ring {
+  box-shadow:
+    0 0 20px -4px rgba(236, 72, 153, 0.45),
+    0 0 28px -6px rgba(34, 211, 238, 0.35);
+}
+
+.members-heading-gradient {
+  background: linear-gradient(120deg, #f472b6 0%, #e879f9 35%, #22d3ee 70%, #4ade80 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Home / catálogo — orbes fixos por trás do conteúdo */
+.home-browse-orbs {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 50% at 15% 15%, rgba(236, 72, 153, 0.12) 0%, transparent 55%),
+    radial-gradient(ellipse 65% 45% at 92% 25%, rgba(34, 211, 238, 0.1) 0%, transparent 52%),
+    radial-gradient(ellipse 70% 38% at 50% 100%, rgba(74, 222, 128, 0.08) 0%, transparent 48%);
+  opacity: 1;
 }

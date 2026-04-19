@@ -1,4 +1,5 @@
 import { buildMockSeed } from '@/data/mockSeed';
+import { mapLegacyFitnessSeriesId } from '@/data/fitnessLegacyIdMap';
 import { profileAvatarsSeed } from '@/data/profileAvatars';
 import { demoBypassSubscription } from '@/config/demo';
 import {
@@ -18,6 +19,12 @@ import {
   deleteSeriesImagesFromIdb,
   deleteEpisodeImageFromIdb,
 } from '@/lib/catalogImageStorage';
+import {
+  mockTableCacheGet,
+  mockTableCacheSet,
+  mockTableCacheDelete,
+  mockTableCacheClearAll,
+} from '@/api/mockTableReadCache';
 
 /**
  * Persistência: localStorage (cache) + em dev ficheiro `data/catalog-backup.json` via catalogPersistence.
@@ -29,7 +36,7 @@ function safeGetItem(key) {
   try {
     return localStorage.getItem(key);
   } catch (e) {
-    console.warn('[TerrorFlix] localStorage.getItem indisponível', key, e);
+    console.warn('[BailaFit] localStorage.getItem indisponível', key, e);
     return null;
   }
 }
@@ -39,7 +46,7 @@ function safeSetItem(key, value) {
     localStorage.setItem(key, value);
     return true;
   } catch (e) {
-    console.error('[TerrorFlix] localStorage.setItem falhou (quota ou modo privado?)', key, e);
+    console.error('[BailaFit] localStorage.setItem falhou (quota ou modo privado?)', key, e);
     return false;
   }
 }
@@ -50,30 +57,36 @@ function safeSetItem(key, value) {
  * do localStorage (evitava apagar filmes/linhas criadas pelo utilizador quando o JSON corrompia).
  */
 function loadTable(name, seedRows) {
+  const hit = mockTableCacheGet(name);
+  if (hit !== undefined) return hit;
+
   const key = mockTableKey(name);
   const raw = safeGetItem(key);
 
   if (raw === null || raw === undefined) {
     const initial = Array.isArray(seedRows) ? [...seedRows] : [];
     safeSetItem(key, JSON.stringify(initial));
+    mockTableCacheSet(name, initial);
     return initial;
   }
 
   if (raw === '') {
     const initial = Array.isArray(seedRows) ? [...seedRows] : [];
     safeSetItem(key, JSON.stringify(initial));
+    mockTableCacheSet(name, initial);
     return initial;
   }
 
   try {
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) {
+      mockTableCacheSet(name, parsed);
       return parsed;
     }
-    console.warn(`[TerrorFlix] ${key}: conteúdo não é array; backup em ${key}_corrupt_backup`);
+    console.warn(`[BailaFit] ${key}: conteúdo não é array; backup em ${key}_corrupt_backup`);
     safeSetItem(`${key}_corrupt_backup`, raw);
   } catch (e) {
-    console.warn(`[TerrorFlix] ${key}: JSON inválido`, e);
+    console.warn(`[BailaFit] ${key}: JSON inválido`, e);
     safeSetItem(`${key}_corrupt_backup`, raw);
   }
 
@@ -111,9 +124,10 @@ async function saveTableAsync(name, rows) {
   const payload = JSON.stringify(processed);
   if (!safeSetItem(key, payload)) {
     throw new Error(
-      `[TerrorFlix] Não foi possível salvar ${name}. Verifique espaço em disco ou desative modo privado com bloqueio de storage.`
+      `[BailaFit] Não foi possível salvar ${name}. Verifique espaço em disco ou desative modo privado com bloqueio de storage.`
     );
   }
+  mockTableCacheSet(name, processed);
   scheduleCatalogSync();
 }
 
@@ -351,9 +365,11 @@ async function getCurrentUser() {
     activated: true,
   };
   const isAdminSession = readMockAdminSession();
-  cachedUser = isAdminSession
-    ? { ...base, role: 'admin' }
-    : { ...base, role: 'user' };
+  const email = String(base.email || '').toLowerCase();
+  /** Conta demo local + sessão /AdminLogin + role guardado em `User`. */
+  const asAdmin =
+    isAdminSession || base.role === 'admin' || email === 'demo@local.dev';
+  cachedUser = asAdmin ? { ...base, role: 'admin' } : { ...base, role: 'user' };
   return cachedUser;
 }
 
@@ -378,10 +394,10 @@ export const localMockClient = {
       } catch {
         /* ignore */
       }
-      console.info('[TerrorFlix demo] logout — sessão local limpa (sem redirect externo).');
+      console.info('[BailaFit demo] logout — sessão local limpa (sem redirect externo).');
     },
     redirectToLogin() {
-      console.info('[TerrorFlix demo] redirectToLogin ignorado.');
+      console.info('[BailaFit demo] redirectToLogin ignorado.');
     },
     async updateMe(patch) {
       const u = await getCurrentUser();
@@ -550,8 +566,14 @@ function migrateRemoveProfileArroto() {
   }
 }
 
+function remapPublicImagePath(u) {
+  if (typeof u !== 'string' || !u.trim()) return u;
+  if (u.includes('/images/')) return u.replace(/\/images\//g, '/imagens/');
+  return u;
+}
+
 /**
- * Substitui caminhos antigos para PNGs que não existiam no repo por SVGs em public/images/banners/.
+ * Substitui caminhos antigos (`/images/` → `/imagens/`), PNGs em falta e URLs quebradas no catálogo local.
  */
 function migrateSeriesLegacyBannerFiles() {
   if (typeof window === 'undefined') return;
@@ -561,8 +583,8 @@ function migrateSeriesLegacyBannerFiles() {
     if (!raw) return;
     const rows = JSON.parse(raw);
     const REPLACEMENTS = {
-      '/images/banners/banner-it-pennywise.png': '/images/banners/poster-movie.svg',
-      '/images/banners/banner-jack-in-the-box.png': '/images/banners/poster-movie.svg',
+      '/imagens/banners/banner-it-pennywise.png': '/imagens/banners/poster-movie.svg',
+      '/imagens/banners/banner-jack-in-the-box.png': '/imagens/banners/poster-movie.svg',
     };
     let changed = false;
     const out = rows.map((row) => {
@@ -575,12 +597,22 @@ function migrateSeriesLegacyBannerFiles() {
         r.banner_url = REPLACEMENTS[r.banner_url];
         changed = true;
       }
+      const rc = remapPublicImagePath(r.cover_url);
+      const rb = remapPublicImagePath(r.banner_url);
+      if (rc !== r.cover_url) {
+        r.cover_url = rc;
+        changed = true;
+      }
+      if (rb !== r.banner_url) {
+        r.banner_url = rb;
+        changed = true;
+      }
       if (
         r.id === 'series-3' &&
         typeof r.cover_url === 'string' &&
         r.cover_url.includes('unsplash.com')
       ) {
-        r.cover_url = '/images/banners/poster-comedy.svg';
+        r.cover_url = '/imagens/banners/poster-comedy.svg';
         changed = true;
       }
       return r;
@@ -588,6 +620,30 @@ function migrateSeriesLegacyBannerFiles() {
     if (changed) localStorage.setItem(key, JSON.stringify(out));
   } catch (e) {
     console.warn('[demo] migrateSeriesLegacyBannerFiles', e);
+  }
+}
+
+/** Episódios: miniaturas com pasta antiga `/images/`. */
+function migrateEpisodeLegacyImagePaths() {
+  if (typeof window === 'undefined') return;
+  try {
+    const key = mockTableKey('Episode');
+    const raw = safeGetItem(key);
+    if (!raw) return;
+    const rows = JSON.parse(raw);
+    let changed = false;
+    const out = rows.map((row) => {
+      const r = { ...row };
+      const t = remapPublicImagePath(r.thumbnail_url);
+      if (t !== r.thumbnail_url) {
+        r.thumbnail_url = t;
+        changed = true;
+      }
+      return r;
+    });
+    if (changed) safeSetItem(key, JSON.stringify(out));
+  } catch (e) {
+    console.warn('[demo] migrateEpisodeLegacyImagePaths', e);
   }
 }
 
@@ -622,10 +678,11 @@ function ensureDemoHeroBanners() {
         }
         return {
           ...existing,
-          banner_url: existing.banner_url ?? seedRow.banner_url,
-          cover_url: existing.cover_url ?? seedRow.cover_url,
-          banner_object_position:
-            existing.banner_object_position ?? seedRow.banner_object_position,
+          banner_url: String(existing.banner_url || '').trim() ? existing.banner_url : seedRow.banner_url,
+          cover_url: String(existing.cover_url || '').trim() ? existing.cover_url : seedRow.cover_url,
+          banner_object_position: String(existing.banner_object_position || '').trim()
+            ? existing.banner_object_position
+            : seedRow.banner_object_position,
         };
       }).filter(Boolean);
       series.forEach((r) => {
@@ -647,6 +704,7 @@ function ensureDemoHeroBanners() {
 
 migrateRemoveProfileArroto();
 migrateSeriesLegacyBannerFiles();
+migrateEpisodeLegacyImagePaths();
 ensureDemoHeroBanners();
 
 /** Preenche só `content_type` em registos antigos sem tipo — não sobrescreve categorias nem seções escolhidas no admin. */
@@ -701,13 +759,28 @@ function ensureSeedSeriesRowsAndHighlights() {
           changed = true;
           return { ...s };
         }
-        const hl = ex.highlighted_home_section;
+        let next = { ...ex };
+        let rowChanged = false;
+        if (!String(next.cover_url || '').trim() && s.cover_url) {
+          next.cover_url = s.cover_url;
+          rowChanged = true;
+        }
+        if (!String(next.banner_url || '').trim() && s.banner_url) {
+          next.banner_url = s.banner_url;
+          rowChanged = true;
+        }
+        if (!String(next.banner_object_position || '').trim() && s.banner_object_position) {
+          next.banner_object_position = s.banner_object_position;
+          rowChanged = true;
+        }
+        const hl = next.highlighted_home_section;
         const hlEmpty = hl == null || String(hl).trim() === '';
         if (hlEmpty && s.highlighted_home_section) {
-          changed = true;
-          return { ...ex, highlighted_home_section: s.highlighted_home_section };
+          next = { ...next, highlighted_home_section: s.highlighted_home_section };
+          rowChanged = true;
         }
-        return ex;
+        if (rowChanged) changed = true;
+        return next;
       })
       .filter(Boolean);
 
@@ -722,6 +795,228 @@ function ensureSeedSeriesRowsAndHighlights() {
 }
 
 ensureSeedSeriesRowsAndHighlights();
+
+/** Protocolo Barriga Chapada: fileira da home = Área Vip (`extras`), mantendo o mesmo `id` e episódios. */
+function migrateProtocoloP0ToExtrasSection() {
+  if (typeof window === 'undefined') return;
+  try {
+    const key = mockTableKey('Series');
+    const raw = safeGetItem(key);
+    if (!raw) return;
+    const rows = JSON.parse(raw);
+    let changed = false;
+    const out = rows.map((r) => {
+      if (r?.id !== 'fit-programas_desafios-p0') return r;
+      if (String(r.highlighted_home_section || '').trim() === 'extras') return r;
+      changed = true;
+      return { ...r, highlighted_home_section: 'extras' };
+    });
+    if (changed) safeSetItem(key, JSON.stringify(out));
+  } catch (e) {
+    console.warn('[demo] migrateProtocoloP0ToExtrasSection', e);
+  }
+}
+
+migrateProtocoloP0ToExtrasSection();
+
+/**
+ * Capas do seed no localStorage:
+ * - `fit-*`: sempre igual ao seed (determinístico; corrige `coverRot` antigo).
+ * - Demais IDs do seed: repõe `cover_url` só quando está vazio (não sobrescreve capas personalizadas).
+ */
+function repairSeedSeriesCoversFromSeed() {
+  if (typeof window === 'undefined') return;
+  try {
+    const seedRows = buildMockSeed().Series.filter((s) => s?.id && String(s.cover_url || '').trim());
+    const seedById = Object.fromEntries(seedRows.map((s) => [s.id, s]));
+    const key = mockTableKey('Series');
+    const raw = safeGetItem(key);
+    if (!raw) return;
+    const rows = JSON.parse(raw);
+    let changed = false;
+    const out = rows.map((row) => {
+      const s = seedById[row.id];
+      if (!s) return row;
+      const cur = String(row.cover_url ?? '').trim();
+      /** Só preenche capa a partir do seed quando está vazio — inclui `fit-*`, para capas do admin persistirem após reload. */
+      if (!cur) {
+        changed = true;
+        return { ...row, cover_url: s.cover_url };
+      }
+      return row;
+    });
+    if (changed) safeSetItem(key, JSON.stringify(out));
+  } catch (e) {
+    console.warn('[demo] repairSeedSeriesCoversFromSeed', e);
+  }
+}
+
+repairSeedSeriesCoversFromSeed();
+
+/**
+ * Acrescenta episódios do seed que ainda não existem no localStorage (ex.: catálogo fitness após atualização).
+ */
+function ensureSeedEpisodesMerged() {
+  if (typeof window === 'undefined') return;
+  try {
+    const seed = buildMockSeed().Episode;
+    const key = mockTableKey('Episode');
+    const raw = safeGetItem(key);
+    if (!raw) return;
+    const rows = JSON.parse(raw);
+    const byId = Object.fromEntries(rows.map((r) => [r.id, r]));
+    const seedIds = new Set(seed.map((e) => e.id));
+    let changed = false;
+
+    const merged = seed
+      .map((s) => {
+        const ex = byId[s.id];
+        if (!ex) {
+          changed = true;
+          return { ...s };
+        }
+        const seedVideo = String(s.video_url || '').trim();
+        const exVideo = String(ex.video_url || '').trim();
+        if (!exVideo && seedVideo) {
+          changed = true;
+          return { ...ex, video_url: s.video_url, duration: s.duration ?? ex.duration };
+        }
+        return ex;
+      })
+      .filter(Boolean);
+
+    rows.forEach((r) => {
+      if (!seedIds.has(r.id)) merged.push(r);
+    });
+
+    if (changed) safeSetItem(key, JSON.stringify(merged));
+  } catch (e) {
+    console.warn('[demo] ensureSeedEpisodesMerged', e);
+  }
+}
+
+ensureSeedEpisodesMerged();
+
+/**
+ * Episódios/séries com prefixos antigos (ex.: fit-para_emagrecer-a → fit-treinos_principais-a).
+ * Sem isto, a poda remove o vídeo porque a série legada já não entra nas 5 fileiras.
+ */
+function migrateLegacyFitnessIds() {
+  if (typeof window === 'undefined') return;
+  try {
+    const keyS = mockTableKey('Series');
+    const keyE = mockTableKey('Episode');
+    const rawS = safeGetItem(keyS);
+    const rawE = safeGetItem(keyE);
+    if (!rawS || !rawE) return;
+    let seriesList = JSON.parse(rawS);
+    const episodeListRaw = JSON.parse(rawE);
+    const seedSeries = buildMockSeed().Series;
+    const seedById = Object.fromEntries(seedSeries.map((r) => [r.id, r]));
+    const seedIds = new Set(seedSeries.map((s) => s.id));
+    let changed = false;
+
+    const epById = new Map();
+    for (const ep of episodeListRaw) {
+      const oldSid = ep.series_id;
+      const newSid = mapLegacyFitnessSeriesId(oldSid);
+      let next = { ...ep };
+      if (newSid !== oldSid) {
+        changed = true;
+        const idStr = String(ep.id || '');
+        const prefix = `ep-${oldSid}`;
+        let newId = ep.id;
+        if (idStr === prefix) {
+          newId = `ep-${newSid}`;
+        } else if (idStr.startsWith(`${prefix}-`)) {
+          newId = `ep-${newSid}-${idStr.slice(prefix.length + 1)}`;
+        } else if (idStr.startsWith('ep-')) {
+          newId = `ep-${newSid}`;
+        }
+        next = { ...ep, series_id: newSid, id: newId };
+      }
+      const cur = epById.get(next.id);
+      if (!cur) {
+        epById.set(next.id, next);
+        continue;
+      }
+      const pick =
+        String(next.video_url || '').trim().length >= String(cur.video_url || '').trim().length ? next : cur;
+      if (pick !== cur) changed = true;
+      epById.set(next.id, pick);
+    }
+    const episodeList = [...epById.values()];
+
+    let idSet = new Set(seriesList.map((r) => r.id));
+    seriesList = seriesList.filter((row) => {
+      const mapped = mapLegacyFitnessSeriesId(row.id);
+      if (mapped !== row.id && seedIds.has(mapped) && idSet.has(mapped)) {
+        changed = true;
+        return false;
+      }
+      return true;
+    });
+
+    idSet = new Set(seriesList.map((r) => r.id));
+    seriesList = seriesList.map((row) => {
+      const mapped = mapLegacyFitnessSeriesId(row.id);
+      if (mapped === row.id || !seedIds.has(mapped)) return row;
+      if (idSet.has(mapped) && row.id !== mapped) return row;
+      const seedRow = seedById[mapped];
+      if (!seedRow) return row;
+      changed = true;
+      return {
+        ...row,
+        id: mapped,
+        highlighted_home_section: seedRow.highlighted_home_section ?? row.highlighted_home_section,
+        title: seedRow.title || row.title,
+        cover_url: row.cover_url || seedRow.cover_url,
+        content_type: row.content_type || seedRow.content_type,
+      };
+    });
+
+    if (changed) {
+      safeSetItem(keyE, JSON.stringify(episodeList));
+      safeSetItem(keyS, JSON.stringify(seriesList));
+    }
+  } catch (e) {
+    console.warn('[demo] migrateLegacyFitnessIds', e);
+  }
+}
+
+migrateLegacyFitnessIds();
+
+/**
+ * Remove só episódios órfãos (series_id sem série no storage nem no seed).
+ * Não apagar por «fileira da home» ou video_url vazio — isso eliminava episódios criados no admin.
+ */
+function pruneOrphanEpisodesOnly() {
+  if (typeof window === 'undefined') return;
+  try {
+    const keyS = mockTableKey('Series');
+    const keyE = mockTableKey('Episode');
+    const rawS = safeGetItem(keyS);
+    const rawE = safeGetItem(keyE);
+    if (!rawS || !rawE) return;
+    const seriesList = JSON.parse(rawS);
+    const episodeRows = JSON.parse(rawE);
+    const seriesById = Object.fromEntries(seriesList.map((r) => [r.id, r]));
+    const seedSeriesById = Object.fromEntries(buildMockSeed().Series.map((r) => [r.id, r]));
+
+    const kept = episodeRows.filter((ep) => {
+      const parent = seriesById[ep.series_id] || seedSeriesById[ep.series_id];
+      return Boolean(parent);
+    });
+
+    if (kept.length !== episodeRows.length) {
+      safeSetItem(keyE, JSON.stringify(kept));
+    }
+  } catch (e) {
+    console.warn('[demo] pruneOrphanEpisodesOnly', e);
+  }
+}
+
+pruneOrphanEpisodesOnly();
 
 /** Corrige nomes antigos (Goku, Avatar N…) e SVG data-URL quebrados; não substitui Imgur válido. */
 function migrateAvatarsTerrorTheme() {
@@ -763,6 +1058,39 @@ function migrateAvatarsTerrorTheme() {
 
 migrateAvatarsTerrorTheme();
 
+/** Demo: extras com paywall mesmo em dados antigos do localStorage. */
+function migratePremiumLockDemoExtras() {
+  if (typeof window === 'undefined') return;
+  const locks = {
+    'fit-extras-e1': 'R$ 12,90',
+    'fit-extras-e2': 'R$ 19,90',
+    'fit-programas_desafios-b7': 'R$ 7,90',
+  };
+  try {
+    const key = mockTableKey('Series');
+    const raw = safeGetItem(key);
+    if (!raw) return;
+    const rows = JSON.parse(raw);
+    let changed = false;
+    const out = rows.map((r) => {
+      const price = locks[r?.id];
+      if (price && !String(r.premium_unlock_price || '').trim()) {
+        changed = true;
+        return { ...r, premium_unlock_price: price };
+      }
+      return r;
+    });
+    if (changed) safeSetItem(key, JSON.stringify(out));
+  } catch (e) {
+    console.warn('[demo] migratePremiumLockDemoExtras', e);
+  }
+}
+
+migratePremiumLockDemoExtras();
+
+/** Migrações síncronas escrevem no localStorage sem passar por saveTableAsync — limpa cache antes do 1.º render. */
+mockTableCacheClearAll();
+
 /**
  * Migração única: data URLs gigantes ainda no JSON do localStorage → IndexedDB.
  */
@@ -785,6 +1113,7 @@ function migrateInlineDataImagesToIdb() {
           })
         );
         if (JSON.stringify(rows) !== JSON.stringify(next) && safeSetItem(keyS, JSON.stringify(next))) {
+          mockTableCacheDelete('Series');
           scheduleCatalogSync();
         }
       }
@@ -807,6 +1136,7 @@ function migrateInlineDataImagesToIdb() {
           })
         );
         if (JSON.stringify(rows) !== JSON.stringify(next) && safeSetItem(keyE, JSON.stringify(next))) {
+          mockTableCacheDelete('Episode');
           scheduleCatalogSync();
         }
       }

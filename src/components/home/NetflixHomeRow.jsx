@@ -10,7 +10,7 @@ import SeriesCarousel from './SeriesCarousel';
 /**
  * Uma fileira Netflix: filmes (marquee contínuo; direção alterna com `rowIndex`) e séries (carrossel).
  */
-export default function NetflixHomeRow({
+function NetflixHomeRow({
   slug,
   label,
   visibleSeries,
@@ -33,10 +33,10 @@ export default function NetflixHomeRow({
 
   const header = (
     <div className="flex items-center justify-between px-4 md:px-12 mb-3 md:mb-4">
-      <h2 className="text-lg md:text-xl font-bold">{label}</h2>
+      <h2 className="text-lg md:text-xl font-bold members-heading-gradient">{label}</h2>
       <Link
         to={`/Browse?section=${encodeURIComponent(slug)}`}
-        className="flex items-center gap-1 text-sm text-gray-400 hover:text-white transition-colors"
+        className="flex items-center gap-1 text-sm text-gray-400 hover:text-neon-cyan transition-colors"
       >
         Ver Todos
         <ArrowRight className="w-4 h-4" />
@@ -81,3 +81,5 @@ export default function NetflixHomeRow({
     </div>
   );
 }
+
+export default React.memo(NetflixHomeRow);

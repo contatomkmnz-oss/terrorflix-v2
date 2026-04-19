@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Upload, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { publicAssetUrl } from '@/lib/publicAssetUrl';
 
 export default function ImageUpload({ value, onChange, placeholder = "Clique para enviar uma imagem", aspectRatio = "cover" }) {
   const [uploading, setUploading] = useState(false);
@@ -32,7 +33,7 @@ export default function ImageUpload({ value, onChange, placeholder = "Clique par
       >
         {value ? (
           <>
-            <img src={value} alt="" className="w-full h-full object-cover" />
+            <img src={publicAssetUrl(value)} alt="" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
               <p className="text-sm text-white font-medium">Trocar imagem</p>
             </div>

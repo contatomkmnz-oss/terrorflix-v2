@@ -34,7 +34,7 @@ export default function AdminAvatars() {
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center gap-4 mb-6">
           <Link to="/Admin" className="text-gray-400 hover:text-white"><ArrowLeft className="w-5 h-5" /></Link>
-          <h1 className="text-2xl font-bold flex-1">Avatares de Terror</h1>
+          <h1 className="text-2xl font-bold flex-1">Avatares de perfil</h1>
           <Button onClick={() => setDialogOpen(true)} className="bg-[#E50914] hover:bg-[#FF3D3D]">
             <Plus className="w-4 h-4 mr-2" /> Novo avatar
           </Button>
@@ -64,7 +64,7 @@ export default function AdminAvatars() {
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogContent className="bg-[#1A1A1A] border-white/10 text-white max-w-sm">
-            <DialogHeader><DialogTitle>Novo avatar de terror</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>Novo avatar</DialogTitle></DialogHeader>
             <div className="space-y-3">
               <Input placeholder="Nome (ex: Fantasma, Caveira...)" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="bg-[#2A2A2A] border-none" />
               <ImageUpload value={form.image_url} onChange={v => setForm({ ...form, image_url: v })} placeholder="Clique para enviar a imagem" aspectRatio="square" />

@@ -22,7 +22,13 @@ export default function MovieAutoCarousel({
 }) {
   const loopItems = useMemo(() => {
     if (!movies?.length) return [];
-    return [...movies, ...movies];
+    const seen = new Set();
+    return movies.filter((s) => {
+      const id = s?.id;
+      if (id == null || seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
   }, [movies]);
 
   const durationSec = Math.max(28, movies.length * 9);
@@ -31,11 +37,11 @@ export default function MovieAutoCarousel({
 
   const header = showHeader ? (
     <div className="flex items-center justify-between px-4 md:px-12 mb-3 md:mb-4">
-      <h2 className="text-lg md:text-xl font-bold">{title}</h2>
+      <h2 className="text-lg md:text-xl font-bold members-heading-gradient">{title}</h2>
       {(browseTo || category) && (
         <Link
           to={browseTo || `/Browse?category=${encodeURIComponent(category)}`}
-          className="flex items-center gap-1 text-sm text-gray-400 hover:text-white transition-colors"
+          className="flex items-center gap-1 text-sm text-gray-400 hover:text-neon-cyan transition-colors"
         >
           Ver Todos
           <ArrowRight className="w-4 h-4" />
@@ -60,8 +66,8 @@ export default function MovieAutoCarousel({
             className={trackClass}
             style={{ animationDuration: `${durationSec}s` }}
           >
-            {loopItems.map((s, i) => (
-              <div key={`${s.id}-loop-${i}`} className="shrink-0">
+            {loopItems.map((s) => (
+              <div key={s.id} className="shrink-0">
                 <SeriesCard
                   series={s}
                   isInList={myListIds?.includes(s.id)}

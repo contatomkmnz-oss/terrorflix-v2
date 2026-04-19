@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Play, Plus, Check, Clock } from 'lucide-react';
+import { Play, Plus, Check, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { isMovie, getMovieStreamUrl, hasPlayableVideoLink } from '@/constants/contentType';
+import { isMovie, getMovieStreamUrl } from '@/constants/contentType';
 import { imageUrlWithCacheBust } from '@/lib/imageCacheBust';
+import { publicAssetUrl } from '@/lib/publicAssetUrl';
 import { seriesDetailHref } from '@/lib/seriesRoutes';
+import {
+  CATALOG_PREMIUM_UNLOCK_HREF,
+  isPremiumCatalogLocked,
+  formatPremiumUnlockCta,
+} from '@/lib/catalogPremiumLock';
 
 export default function SeriesCard({
   series,
@@ -21,13 +27,16 @@ export default function SeriesCard({
     setCoverBroken(false);
   }, [series.id, series.cover_url]);
 
-  const movieStreamUrl = getMovieStreamUrl(series);
+  const movieStreamUrl = getMovieStreamUrl(series, episodes);
   const filmePronto = isMovie(series) && !!movieStreamUrl;
-  const showComingSoon = !hasPlayableVideoLink(series, episodes);
+  const premiumLocked = isPremiumCatalogLocked(series);
   const detailHref = seriesDetailHref(series);
-  const playHref = filmePronto
-    ? `/Player?seriesId=${series.id}`
-    : detailHref;
+  const posterHref = premiumLocked ? CATALOG_PREMIUM_UNLOCK_HREF : detailHref;
+  const playHref = premiumLocked
+    ? CATALOG_PREMIUM_UNLOCK_HREF
+    : filmePronto
+      ? `/Player?seriesId=${series.id}`
+      : detailHref;
 
   const shellClass =
     'relative shrink-0 w-[140px] md:w-[200px] lg:w-[240px] group cursor-pointer';
@@ -49,14 +58,14 @@ export default function SeriesCard({
 
   return (
     <Shell {...shellProps}>
-      <Link to={detailHref}>
+      <Link to={posterHref}>
         <div className="aspect-[2/3] rounded-lg overflow-hidden bg-[#1A1A1A] shadow-lg relative">
           {series.cover_url ? (
             <img
               key={`${series.id}-${series.updated_date || ''}-${coverBroken ? 'fb' : 'ok'}`}
               src={
                 coverBroken
-                  ? '/images/banners/poster-movie.svg'
+                  ? publicAssetUrl('/imagens/banners/poster-movie.svg')
                   : imageUrlWithCacheBust(series.cover_url, series)
               }
               alt={series.title}
@@ -67,18 +76,18 @@ export default function SeriesCard({
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#E50914]/30 to-[#1A1A1A] p-3">
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-neon-fuchsia/35 to-member-elevated p-3">
               <span className="text-sm font-bold text-center text-white/80">{series.title}</span>
             </div>
           )}
-          {showComingSoon && (
-            <div className="absolute inset-0 bg-black/60 flex items-end justify-center pb-4">
-              <div className="flex flex-col items-center gap-1 px-2 text-center">
-                <Clock className="w-4 h-4 text-[#FFC107]" />
-                <span className="text-[10px] md:text-xs font-bold text-[#FFC107] leading-tight">
-                  EM BREVE
-                </span>
+          {premiumLocked && (
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/20 flex flex-col items-center justify-center gap-2 px-2 text-center pointer-events-none">
+              <div className="rounded-full bg-black/55 p-2.5 ring-2 ring-[#FFC107]/80 shadow-[0_0_20px_-4px_rgba(255,193,7,0.5)]">
+                <Lock className="w-6 h-6 md:w-7 md:h-7 text-[#FFC107]" strokeWidth={2.25} />
               </div>
+              <span className="text-[10px] md:text-xs font-bold text-white leading-tight drop-shadow-md max-w-[11rem]">
+                {formatPremiumUnlockCta(series)}
+              </span>
             </div>
           )}
         </div>
@@ -86,14 +95,19 @@ export default function SeriesCard({
 
       {hovered && (() => {
         const hoverPanelBody = (
-          <div className="bg-[#1A1A1A] rounded-b-lg p-3 shadow-2xl border-t border-[#E50914]/30">
+          <div className="bg-member-elevated/95 rounded-b-lg p-3 shadow-2xl border-t border-neon-cyan/35">
             <p className="text-xs font-semibold text-white truncate mb-2">{series.title}</p>
             <div className="flex items-center gap-2">
               <Link
                 to={playHref}
-                className="w-7 h-7 rounded-full bg-white flex items-center justify-center hover:bg-gray-200 transition-colors"
+                className="w-7 h-7 rounded-full bg-gradient-to-br from-neon-fuchsia to-neon-cyan flex items-center justify-center hover:opacity-95 transition-opacity shadow-[0_0_12px_-2px_rgba(232,121,249,0.5)]"
+                title={premiumLocked ? formatPremiumUnlockCta(series) : undefined}
               >
-                <Play className="w-3.5 h-3.5 text-black fill-current ml-0.5" />
+                {premiumLocked ? (
+                  <Lock className="w-3.5 h-3.5 text-white" />
+                ) : (
+                  <Play className="w-3.5 h-3.5 text-white fill-current ml-0.5" />
+                )}
               </Link>
               {onToggleList && (
                 <button
@@ -102,12 +116,6 @@ export default function SeriesCard({
                 >
                   {isInList ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
                 </button>
-              )}
-            </div>
-            <div className="flex items-center gap-2 mt-2 text-[10px] text-gray-400">
-              {series.year && <span>{series.year}</span>}
-              {series.age_rating && (
-                <span className="border border-gray-600 px-1 rounded">{series.age_rating}</span>
               )}
             </div>
           </div>

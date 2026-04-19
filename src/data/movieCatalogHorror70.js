@@ -1,7 +1,7 @@
 /**
  * Lote de 70 filmes de terror — integrado em `movieCatalog.js`.
  * Categorias usam apenas rótulos das fileiras Netflix (`netflixRowOrder.js`).
- * Capas: ciclo em `movieCatalog.js` → poster(i) (SVGs em /images/banners/).
+ * Capas: ciclo em `movieCatalog.js` → poster(i) (SVGs em /imagens/banners/).
  */
 export const MOVIE_HORROR_70 = [
   {

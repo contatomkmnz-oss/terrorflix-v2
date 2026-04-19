@@ -50,6 +50,21 @@ module.exports = {
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
   			},
+  			/** Paleta neon (dança / fitness) — área de membros */
+  			neon: {
+  				cyan: '#22d3ee',
+  				fuchsia: '#e879f9',
+  				pink: '#f472b6',
+  				magenta: '#d946ef',
+  				lime: '#4ade80',
+  				orange: '#fb923c',
+  				violet: '#a78bfa',
+  			},
+  			member: {
+  				bg: '#050508',
+  				surface: '#101018',
+  				elevated: '#16161f',
+  			},
   			sidebar: {
   				DEFAULT: 'hsl(var(--sidebar-background))',
   				foreground: 'hsl(var(--sidebar-foreground))',

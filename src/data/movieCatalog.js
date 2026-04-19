@@ -9,15 +9,15 @@ import { posterUrlForCatalogId } from './catalogPosterUrls.js';
 
 /** Rotação só com cartazes verticais — nunca usar hero-slide aqui (são banners horizontais). */
 const POSTERS = [
-  '/images/banners/poster-movie.svg',
-  '/images/banners/poster-tile-b.svg',
-  '/images/banners/poster-tile-c.svg',
+  '/imagens/banners/poster-movie.svg',
+  '/imagens/banners/poster-tile-b.svg',
+  '/imagens/banners/poster-tile-c.svg',
 ];
 
 /** Banners largos da ficha/hero (SVGs horizontais). */
 const HERO_BANNERS = [
-  '/images/banners/hero-slide-1.svg',
-  '/images/banners/hero-slide-2.svg',
+  '/imagens/banners/hero-slide-1.svg',
+  '/imagens/banners/hero-slide-2.svg',
 ];
 
 function poster(i) {
@@ -44,6 +44,7 @@ export function bannerForCatalogEntry(entry, i) {
  * @property {string} [age_rating]
  * @property {string} [poster_url] — capa absoluta (ex. TMDB/Bunny); senão rotação local + `catalogPosterUrls.js`
  * @property {string} [banner_url] — hero/banner opcional
+ * @property {string} [movie_url] — URL de streaming (filmes); senão `DEMO_VIDEO_MP4` no seed/mock
  */
 
 /** Lista completa — mesmos filmes podem aparecer em várias categorias. */
@@ -145,6 +146,8 @@ Enquanto a situação foge do controle, uma batalha intensa entre o bem e o mal 
     kind: 'movie',
     title: 'A Hora do Pesadelo',
     year: 1984,
+    movie_url:
+      'https://player.mediadelivery.net/embed/628574/d0073d52-2d6b-4a85-957e-794c2c0dc107',
     description:
       'O filme acompanha um grupo de adolescentes que começa a ter pesadelos perturbadores com um homem deformado que possui garras de aço nas mãos. Esse homem é Freddy Krueger, um assassino que invade os sonhos de suas vítimas e as mata durante o sono — mortes que se refletem na vida real. À medida que os jovens tentam permanecer acordados para sobreviver, descobrem a origem sombria do assassino: Krueger foi um molestador de crianças queimado vivo pelos pais da vizinhança e agora busca vingança através dos sonhos.',
     categories: ['Slashers', 'Sagas Completas', 'Mais Assistidos'],
@@ -455,7 +458,7 @@ export function buildSeriesRowsFromMovieCatalog() {
       return {
         ...base,
         content_type: 'movie',
-        movie_url: DEMO_VIDEO_MP4,
+        movie_url: entry.movie_url || DEMO_VIDEO_MP4,
       };
     }
 
@@ -464,4 +467,31 @@ export function buildSeriesRowsFromMovieCatalog() {
       content_type: 'series',
     };
   });
+}
+
+/** Episódios demo por minissérie (`kind: 'series'`) no catálogo — filmes usam só `movie_url`. */
+export const MOVIE_CATALOG_EPISODES_PER_SERIES = 25;
+
+/**
+ * Episódios iniciais para entradas `kind: 'series'` do MOVIE_CATALOG (ex.: minissérie).
+ */
+export function buildEpisodesForMovieCatalogSeries() {
+  const out = [];
+  for (const entry of MOVIE_CATALOG) {
+    if (entry.kind !== 'series') continue;
+    for (let n = 1; n <= MOVIE_CATALOG_EPISODES_PER_SERIES; n += 1) {
+      out.push({
+        id: `ep-${entry.id}-${n}`,
+        series_id: entry.id,
+        title: `Episódio ${n}`,
+        season: 1,
+        number: n,
+        description: '',
+        video_url: DEMO_VIDEO_MP4,
+        duration: 540 + ((n * 41) % 480),
+        thumbnail_url: '',
+      });
+    }
+  }
+  return out;
 }

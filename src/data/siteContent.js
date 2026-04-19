@@ -6,10 +6,10 @@
  */
 
 export const brand = {
-  name: 'TerrorFlix',
-  /** Logo: use URL local em /images ou caminho em public/ */
-  logoUrl: '/images/logo-terrorflix.svg',
-  tagline: 'Terror e suspense em streaming',
+  name: 'BailaFit Dance',
+  /** Logo: ficheiro em public/imagens/ */
+  logoUrl: '/imagens/logo-bailafit-dance.svg',
+  tagline: 'Área de membros · dança e fitness em streaming',
 };
 
 /** Seção da home (campo «Seção especial» no admin) — valores internos usados em URLs /Browse?section= */
@@ -29,7 +29,7 @@ export const subscriptionPlans = [
     priceValue: 1990,
     period: '/mês',
     iconKey: 'Zap',
-    color: 'border-blue-500',
+    color: 'border-neon-cyan/70 shadow-[0_0_24px_-8px_rgba(34,211,238,0.5)]',
     badge: null,
     features: [
       'Acesso a todo o catálogo',
@@ -45,7 +45,7 @@ export const subscriptionPlans = [
     priceValue: 2990,
     period: '/mês',
     iconKey: 'Star',
-    color: 'border-[#E50914]',
+    color: 'border-neon-fuchsia/80 shadow-[0_0_28px_-6px_rgba(232,121,249,0.55)]',
     badge: 'Mais Popular',
     features: [
       'Tudo do plano Mensal',
@@ -62,7 +62,7 @@ export const subscriptionPlans = [
     priceValue: 19900,
     period: '/ano',
     iconKey: 'Crown',
-    color: 'border-[#FFC107]',
+    color: 'border-neon-lime/75 shadow-[0_0_24px_-8px_rgba(74,222,128,0.45)]',
     badge: 'Melhor Custo-Benefício',
     features: [
       'Tudo do plano Premium',
@@ -74,7 +74,7 @@ export const subscriptionPlans = [
 ];
 
 export const subscriptionPage = {
-  titleHtml: ['Terror', 'Flix', ' Premium'],
+  titleHtml: ['BailaFit', ' Dance', ' Premium'],
   subtitle: 'Escolha o plano ideal para você',
   paymentNote:
     'Modo local: nenhum pagamento real. Em produção, costuma-se usar PIX/cartão via gateway — aqui é apenas demonstração.',
@@ -88,7 +88,7 @@ export const demoMessages = {
 };
 
 export const footer = {
-  copyright: 'TerrorFlix. Todos os direitos reservados.',
+  copyright: 'BailaFit Dance. Todos os direitos reservados.',
 };
 
 /** FAQ editável (ex.: landing ou página de ajuda futura) */

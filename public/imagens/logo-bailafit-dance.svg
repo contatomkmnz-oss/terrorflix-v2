@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 96" role="img" aria-labelledby="logoTitle">
+  <title id="logoTitle">BailaFit Dance</title>
+  <text
+    x="220"
+    y="46"
+    text-anchor="middle"
+    fill="#ffffff"
+    font-family="system-ui, -apple-system, 'Segoe UI', 'Arial Black', 'Helvetica Neue', Arial, sans-serif"
+    font-size="40"
+    font-weight="900"
+    letter-spacing="0.04em"
+  >BAILAFIT</text>
+  <text
+    x="220"
+    y="80"
+    text-anchor="middle"
+    fill="#ffffff"
+    font-family="system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+    font-size="13"
+    font-weight="400"
+    letter-spacing="0.78em"
+  >DANCE</text>
+</svg>

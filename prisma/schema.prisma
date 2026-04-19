@@ -106,20 +106,26 @@ model SeriesCategory {
 }
 
 model HeroBanner {
-  id             String   @id @default(cuid())
-  title          String
-  subtitle       String?
-  description    String?
-  image          String
-  linkedMovieId  String?  @map("linked_movie_id")
-  linkedSeriesId String?  @map("linked_series_id")
-  customUrl      String?  @map("custom_url")
-  sortOrder      Int      @default(0) @map("sort_order")
-  isActive       Boolean  @default(true) @map("is_active")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
-  linkedMovie    Movie?   @relation(fields: [linkedMovieId], references: [id], onDelete: SetNull)
-  linkedSeries   Series?  @relation(fields: [linkedSeriesId], references: [id], onDelete: SetNull)
+  id                   String   @id @default(cuid())
+  title                String
+  subtitle             String?
+  description          String?
+  image                String
+  linkedMovieId        String?  @map("linked_movie_id")
+  linkedSeriesId       String?  @map("linked_series_id")
+  customUrl            String?  @map("custom_url")
+  /** Rota ou URL externa para «Mais informações» (banner sem filme/série) */
+  detailUrl            String?  @map("detail_url")
+  bannerObjectPosition String?  @map("banner_object_position")
+  heroYear             String?  @map("hero_year")
+  heroRating           String?  @map("hero_rating")
+  heroCategory         String?  @map("hero_category")
+  sortOrder            Int      @default(0) @map("sort_order")
+  isActive             Boolean  @default(true) @map("is_active")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+  linkedMovie          Movie?   @relation(fields: [linkedMovieId], references: [id], onDelete: SetNull)
+  linkedSeries         Series?  @relation(fields: [linkedSeriesId], references: [id], onDelete: SetNull)
 }
 
 model AdminUser {

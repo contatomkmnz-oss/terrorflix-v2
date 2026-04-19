@@ -2,20 +2,29 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Plus, Pencil, Trash2, ArrowLeft } from 'lucide-react';
+import { Plus, Pencil, Trash2, ArrowLeft, Timer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { isLikelyBunnyUrl } from '@/config/bunny';
+import { publicAssetUrl } from '@/lib/publicAssetUrl';
 import { isMovie } from '@/constants/contentType';
+import {
+  formatMediaDurationSeconds,
+  isDirectVideoUrlForProbe,
+  probeVideoDurationSeconds,
+} from '@/lib/formatMediaDuration';
+import { useToast } from '@/components/ui/use-toast';
 
 export default function AdminEpisodes() {
   const params = new URLSearchParams(window.location.search);
   const seriesId = params.get('seriesId');
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [probingDuration, setProbingDuration] = useState(false);
   const [form, setForm] = useState({ title: '', season: 1, number: 1, description: '', video_url: '', duration: '', thumbnail_url: '' });
 
   const { data: series } = useQuery({
@@ -90,6 +99,28 @@ export default function AdminEpisodes() {
 
   const isFilme = series && isMovie(series);
 
+  const detectDurationFromVideoFile = async () => {
+    const url = String(form.video_url || '').trim();
+    if (!url) return;
+    setProbingDuration(true);
+    try {
+      const sec = await probeVideoDurationSeconds(url);
+      setForm((f) => ({ ...f, duration: String(sec) }));
+      toast({
+        title: 'Duração do vídeo',
+        description: `${formatMediaDurationSeconds(sec)} (${sec}s) — guardada no formulário.`,
+      });
+    } catch (e) {
+      toast({
+        title: 'Não foi possível detectar',
+        description: String(e?.message || e),
+        variant: 'destructive',
+      });
+    } finally {
+      setProbingDuration(false);
+    }
+  };
+
   const videoUrlBlock = (
     <div className="space-y-2 rounded-lg border border-[#E50914]/30 bg-[#E50914]/5 p-4">
       <p className="text-sm font-semibold text-white">
@@ -97,10 +128,11 @@ export default function AdminEpisodes() {
         <span className="text-[#E50914] font-normal"> *</span>
       </p>
       <p className="text-xs text-gray-400 leading-relaxed">
-        Cole o link público: Bunny (iframe ou CDN), Google Drive ou ficheiro .mp4/.webm. Sem URL o player não reproduz.
+        Cole o link público: Bunny (iframe ou CDN), Google Drive ou .mp4/.webm. Em <strong className="text-gray-300">filmes</strong> podes
+        definir só aqui (URL do episódio) ou só em Séries e Filmes (URL do filme) — qualquer um serve.
       </p>
       <Input
-        placeholder="https://iframe.mediadelivery.net/embed/... ou https://...b-cdn.net/.../video.mp4"
+        placeholder="Qualquer URL de vídeo (https://…) — Bunny, YouTube, Vimeo, .mp4, .m3u8, embed, etc."
         value={form.video_url}
         onChange={(e) => setForm({ ...form, video_url: e.target.value })}
         className="bg-[#2A2A2A] border border-white/10 text-white"
@@ -120,6 +152,25 @@ export default function AdminEpisodes() {
         /\.(mp4|webm)(\?|$)/i.test(form.video_url) && (
           <p className="text-xs text-gray-400">Ficheiro direto — &lt;video&gt; nativo.</p>
         )}
+      {form.video_url && isDirectVideoUrlForProbe(form.video_url) && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={probingDuration}
+          onClick={detectDurationFromVideoFile}
+          className="border-white/20 text-gray-200 hover:bg-white/10"
+        >
+          <Timer className="w-4 h-4 mr-2" />
+          {probingDuration ? 'A ler o vídeo…' : 'Detectar duração do ficheiro'}
+        </Button>
+      )}
+      {form.video_url && !isDirectVideoUrlForProbe(form.video_url) && (
+        <p className="text-xs text-gray-500">
+          Para Bunny Stream, YouTube ou links embed, defina a duração em segundos à mão (ou use um ficheiro .mp4/.webm
+          público para detectar).
+        </p>
+      )}
     </div>
   );
 
@@ -147,28 +198,33 @@ export default function AdminEpisodes() {
         </div>
 
         <div className="space-y-2">
-          {sorted.map(ep => (
+          {sorted.map((ep) => {
+            const durationLabel = formatMediaDurationSeconds(ep.duration);
+            return (
             <div key={ep.id} className="flex items-center gap-4 p-3 bg-[#1A1A1A] rounded-lg hover:bg-[#222] transition-colors">
               <span className="text-gray-500 font-mono text-sm w-16 shrink-0">
                 T{ep.season || 1}E{ep.number}
               </span>
               <div className="shrink-0 w-24 aspect-video rounded overflow-hidden bg-[#2A2A2A]">
                 {(ep.thumbnail_url || series?.cover_url) ? (
-                  <img src={ep.thumbnail_url || series?.cover_url} alt="" className="w-full h-full object-cover" />
+                  <img src={publicAssetUrl(ep.thumbnail_url || series?.cover_url)} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full bg-[#2A2A2A]" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm truncate">{ep.title}</p>
-                {ep.duration && <p className="text-xs text-gray-500">{Math.floor(ep.duration / 60)} min</p>}
+                {durationLabel && (
+                  <p className="text-xs text-gray-500 tabular-nums">{durationLabel}</p>
+                )}
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 <button onClick={() => openEdit(ep)} className="p-2 text-gray-400 hover:text-white"><Pencil className="w-4 h-4" /></button>
                 <button onClick={() => { if (confirm('Excluir?')) deleteMut.mutate(ep.id); }} className="p-2 text-gray-400 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
               </div>
             </div>
-          ))}
+            );
+          })}
           {episodes.length === 0 && (
             <div className="text-center py-12 text-gray-500">
               <p>{isFilme ? 'Nenhum vídeo do filme cadastrado. Use “Adicionar o Filme” e cole a URL.' : 'Nenhum episódio cadastrado.'}</p>
@@ -199,13 +255,20 @@ export default function AdminEpisodes() {
                     onChange={(e) => setForm({ ...form, title: e.target.value })}
                     className="bg-[#2A2A2A] border-none"
                   />
-                  <Input
-                    type="number"
-                    placeholder="Duração em segundos (opcional)"
-                    value={form.duration}
-                    onChange={(e) => setForm({ ...form, duration: e.target.value })}
-                    className="bg-[#2A2A2A] border-none"
-                  />
+                  <div className="space-y-1">
+                    <Input
+                      type="number"
+                      placeholder="Duração em segundos (opcional)"
+                      value={form.duration}
+                      onChange={(e) => setForm({ ...form, duration: e.target.value })}
+                      className="bg-[#2A2A2A] border-none"
+                    />
+                    {formatMediaDurationSeconds(form.duration) && (
+                      <p className="text-xs text-gray-500 tabular-nums">
+                        Pré-visualização: {formatMediaDurationSeconds(form.duration)}
+                      </p>
+                    )}
+                  </div>
                   <Textarea
                     placeholder="Descrição (opcional)"
                     value={form.description}
@@ -227,6 +290,7 @@ export default function AdminEpisodes() {
                     onChange={(e) => setForm({ ...form, title: e.target.value })}
                     className="bg-[#2A2A2A] border-none"
                   />
+                  {videoUrlBlock}
                   <div className="grid grid-cols-3 gap-3">
                     <Input
                       type="number"
@@ -242,13 +306,20 @@ export default function AdminEpisodes() {
                       onChange={(e) => setForm({ ...form, number: e.target.value })}
                       className="bg-[#2A2A2A] border-none"
                     />
-                    <Input
-                      type="number"
-                      placeholder="Duração (seg)"
-                      value={form.duration}
-                      onChange={(e) => setForm({ ...form, duration: e.target.value })}
-                      className="bg-[#2A2A2A] border-none"
-                    />
+                    <div className="flex flex-col gap-1">
+                      <Input
+                        type="number"
+                        placeholder="Duração (seg)"
+                        value={form.duration}
+                        onChange={(e) => setForm({ ...form, duration: e.target.value })}
+                        className="bg-[#2A2A2A] border-none"
+                      />
+                      {formatMediaDurationSeconds(form.duration) && (
+                        <span className="text-[10px] text-gray-500 tabular-nums text-center">
+                          {formatMediaDurationSeconds(form.duration)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <Textarea
                     placeholder="Descrição"
@@ -256,7 +327,6 @@ export default function AdminEpisodes() {
                     onChange={(e) => setForm({ ...form, description: e.target.value })}
                     className="bg-[#2A2A2A] border-none h-20"
                   />
-                  {videoUrlBlock}
                   <Input
                     placeholder="URL da Thumbnail"
                     value={form.thumbnail_url}

@@ -7,6 +7,13 @@ import { Play, Plus, Check, CheckCircle2, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { isMovie, getMovieStreamUrl } from '@/constants/contentType';
 import { readActiveProfile } from '@/lib/activeProfile';
+import { publicAssetUrl } from '@/lib/publicAssetUrl';
+import {
+  CATALOG_PREMIUM_UNLOCK_HREF,
+  isPremiumCatalogLocked,
+  formatPremiumUnlockCta,
+} from '@/lib/catalogPremiumLock';
+import { formatMediaDurationSeconds } from '@/lib/formatMediaDuration';
 
 export default function SeriesDetail() {
   const routeParams = useParams();
@@ -110,12 +117,6 @@ export default function SeriesDetail() {
     [episodes, selectedSeason]
   );
 
-  const formatDuration = (secs) => {
-    if (!secs) return null;
-    const m = Math.floor(secs / 60);
-    return `${m}min`;
-  };
-
   const getEpisodeProgress = (epId) => {
     const h = history.find(h => h.episode_id === epId);
     if (!h || !h.total_duration) return 0;
@@ -147,17 +148,18 @@ export default function SeriesDetail() {
   }
 
   const firstEp = seasonEpisodes[0];
-  const movieStreamUrl = getMovieStreamUrl(series);
+  const movieStreamUrl = getMovieStreamUrl(series, episodes);
   const assistirFilme = isMovie(series) && !!movieStreamUrl;
+  const premiumLocked = isPremiumCatalogLocked(series);
 
   return (
     <div className="min-h-screen bg-[#141414]">
       {/* Banner — começa do topo (Navbar stack é transparente/sobreposta) */}
       <div className="relative h-[55vh] md:h-[70vh]">
         {series.banner_url ? (
-          <img src={series.banner_url} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          <img src={publicAssetUrl(series.banner_url)} alt="" className="absolute inset-0 w-full h-full object-cover" />
         ) : series.cover_url ? (
-          <img src={series.cover_url} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          <img src={publicAssetUrl(series.cover_url)} alt="" className="absolute inset-0 w-full h-full object-cover" />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-[#E50914]/20 to-[#141414]" />
         )}
@@ -186,8 +188,17 @@ export default function SeriesDetail() {
             <p className="text-gray-200 max-w-xl text-sm md:text-base leading-relaxed mb-6 line-clamp-3">
               {series.description}
             </p>
-            <div className="flex items-center gap-3">
-              {assistirFilme && (
+            <div className="flex items-center gap-3 flex-wrap">
+              {premiumLocked && (
+                <Link
+                  to={CATALOG_PREMIUM_UNLOCK_HREF}
+                  className="flex items-center gap-2 bg-[#FFC107] text-black px-6 py-2.5 rounded font-bold hover:bg-[#FFD54F] transition-all text-sm"
+                >
+                  <Lock className="w-5 h-5" />
+                  {formatPremiumUnlockCta(series)}
+                </Link>
+              )}
+              {!premiumLocked && assistirFilme && (
                 <Link
                   to={`/Player?seriesId=${seriesId}`}
                   className="flex items-center gap-2 bg-white text-black px-6 py-2.5 rounded font-bold hover:bg-white/85 transition-all text-sm"
@@ -196,7 +207,7 @@ export default function SeriesDetail() {
                   Assistir
                 </Link>
               )}
-              {!assistirFilme && firstEp && (
+              {!premiumLocked && !assistirFilme && firstEp && (
                 <Link
                   to={`/Player?episodeId=${firstEp.id}`}
                   className="flex items-center gap-2 bg-white text-black px-6 py-2.5 rounded font-bold hover:bg-white/85 transition-all text-sm"
@@ -256,8 +267,8 @@ export default function SeriesDetail() {
         <div className="space-y-1">
           {seasonEpisodes.map((ep, i) => {
             const progress = getEpisodeProgress(ep.id);
-            const duration = formatDuration(ep.duration);
-            const isLocked = !ep.video_url;
+            const duration = formatMediaDurationSeconds(ep.duration);
+            const isLocked = !ep.video_url || premiumLocked;
 
             const rowContent = (
               <>
@@ -270,7 +281,11 @@ export default function SeriesDetail() {
                 <div className="shrink-0 w-28 md:w-36 relative">
                   <div className="aspect-video rounded overflow-hidden bg-[#2A2A2A]">
                     {ep.thumbnail_url || series.cover_url ? (
-                      <img src={ep.thumbnail_url || series.cover_url} alt="" className={`w-full h-full object-cover transition-transform duration-300 ${!isLocked ? 'group-hover:scale-105' : 'opacity-40'}`} />
+                      <img
+                        src={publicAssetUrl(ep.thumbnail_url || series.cover_url)}
+                        alt=""
+                        className={`w-full h-full object-cover transition-transform duration-300 ${!isLocked ? 'group-hover:scale-105' : premiumLocked ? 'opacity-100' : 'opacity-40'}`}
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-[#333]">
                         {isLocked ? <Lock className="w-5 h-5 text-gray-600" /> : <Play className="w-5 h-5 text-gray-600" />}
@@ -286,9 +301,17 @@ export default function SeriesDetail() {
                     )}
                     {/* Locked overlay */}
                     {isLocked && (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 gap-1">
+                      <div
+                        className={`absolute inset-0 flex flex-col items-center justify-center gap-1 px-1 ${
+                          premiumLocked ? 'bg-black/35' : 'bg-black/60'
+                        }`}
+                      >
                         <Lock className="w-4 h-4 text-[#FFC107]" />
-                        <span className="text-[9px] font-bold text-[#FFC107] text-center leading-tight px-1">EM BREVE</span>
+                        {premiumLocked && (
+                          <span className="text-[9px] font-bold text-[#FFC107] text-center leading-tight px-1">
+                            {formatPremiumUnlockCta(series)}
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
@@ -305,7 +328,9 @@ export default function SeriesDetail() {
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <h3 className={`font-semibold text-sm md:text-base leading-snug ${isLocked ? 'text-gray-500' : isWatched(ep.id) ? 'text-gray-400' : 'text-white'}`}>{ep.title}</h3>
                     {isLocked ? (
-                      <span className="shrink-0 text-[10px] font-bold text-[#FFC107] bg-[#FFC107]/10 border border-[#FFC107]/30 px-1.5 py-0.5 rounded mt-0.5">INDISPONÍVEL</span>
+                      <span className="shrink-0 text-[10px] font-bold text-[#FFC107] bg-[#FFC107]/10 border border-[#FFC107]/30 px-1.5 py-0.5 rounded mt-0.5">
+                        {premiumLocked ? 'BLOQUEADO' : 'INDISPONÍVEL'}
+                      </span>
                     ) : duration && (
                       <span className="shrink-0 text-xs text-gray-400 mt-0.5">{duration}</span>
                     )}
@@ -314,7 +339,11 @@ export default function SeriesDetail() {
                     <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed">{ep.description}</p>
                   )}
                   {isLocked && (
-                    <p className="text-[10px] text-gray-500 mt-1">Este episódio ainda não está disponível para reprodução.</p>
+                    <p className="text-[10px] text-gray-500 mt-1">
+                      {premiumLocked
+                        ? 'Conteúdo exclusivo — libere na área de assinatura.'
+                        : 'Este episódio ainda não está disponível para reprodução.'}
+                    </p>
                   )}
                 </div>
 
@@ -332,12 +361,22 @@ export default function SeriesDetail() {
             );
 
             return isLocked ? (
-              <div
-                key={ep.id}
-                className="flex items-center gap-4 px-2 py-4 rounded border-b border-white/5 last:border-b-0 opacity-80 cursor-not-allowed group"
-              >
-                {rowContent}
-              </div>
+              premiumLocked ? (
+                <Link
+                  key={ep.id}
+                  to={CATALOG_PREMIUM_UNLOCK_HREF}
+                  className="flex items-center gap-4 px-2 py-4 rounded border-b border-white/5 last:border-b-0 hover:bg-[#2A2A2A]/80 transition-colors group"
+                >
+                  {rowContent}
+                </Link>
+              ) : (
+                <div
+                  key={ep.id}
+                  className="flex items-center gap-4 px-2 py-4 rounded border-b border-white/5 last:border-b-0 opacity-80 cursor-not-allowed group"
+                >
+                  {rowContent}
+                </div>
+              )
             ) : (
               <Link
                 key={ep.id}

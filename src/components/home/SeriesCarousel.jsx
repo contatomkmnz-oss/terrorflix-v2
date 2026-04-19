@@ -62,11 +62,11 @@ export default function SeriesCarousel({
 
   const header = showHeader ? (
     <div className="flex items-center justify-between px-4 md:px-12 mb-3 md:mb-4">
-      <h2 className="text-lg md:text-xl font-bold">{title}</h2>
+      <h2 className="text-lg md:text-xl font-bold members-heading-gradient">{title}</h2>
       {(browseTo || category) && (
         <Link
           to={browseTo || `/Browse?category=${encodeURIComponent(category)}`}
-          className="flex items-center gap-1 text-sm text-gray-400 hover:text-white transition-colors"
+          className="flex items-center gap-1 text-sm text-gray-400 hover:text-neon-cyan transition-colors"
         >
           Ver Todos
           <ArrowRight className="w-4 h-4" />
@@ -91,7 +91,7 @@ export default function SeriesCarousel({
           type="button"
           aria-label="Anterior"
           onClick={() => scroll('left')}
-          className="absolute left-0 top-0 bottom-0 z-10 w-10 md:w-14 flex items-center justify-center bg-gradient-to-r from-[#0F0F0F] to-transparent opacity-0 group-hover/carousel:opacity-100 transition-opacity"
+          className="absolute left-0 top-0 bottom-0 z-10 w-10 md:w-14 flex items-center justify-center bg-gradient-to-r from-[#050508] to-transparent opacity-0 group-hover/carousel:opacity-100 transition-opacity"
         >
           <ChevronLeft className="w-6 h-6 md:w-8 md:h-8" />
         </button>
@@ -115,7 +115,7 @@ export default function SeriesCarousel({
           type="button"
           aria-label="Seguinte"
           onClick={() => scroll('right')}
-          className="absolute right-0 top-0 bottom-0 z-10 w-10 md:w-14 flex items-center justify-center bg-gradient-to-l from-[#0F0F0F] to-transparent opacity-0 group-hover/carousel:opacity-100 transition-opacity"
+          className="absolute right-0 top-0 bottom-0 z-10 w-10 md:w-14 flex items-center justify-center bg-gradient-to-l from-[#050508] to-transparent opacity-0 group-hover/carousel:opacity-100 transition-opacity"
         >
           <ChevronRight className="w-6 h-6 md:w-8 md:h-8" />
         </button>

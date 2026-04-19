@@ -1,4 +1,4 @@
-# DesenhosFlix — desenvolvimento local
+# Members BailaFit — desenvolvimento local
 
 Front-end do estilo streaming (Netflix-like) rodando **100% no navegador**, sem Base44, sem backend obrigatório e sem checkout real. Os dados do catálogo e preferências ficam em **localStorage** (modo demonstração).
 

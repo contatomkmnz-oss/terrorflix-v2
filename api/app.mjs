@@ -16,6 +16,13 @@ import {
   clearSessionCookie,
   getTokenFromCookie,
 } from './lib/auth.mjs';
+import {
+  getBunnyStreamConfig,
+  listBunnyVideos,
+  createBunnyVideo,
+  getBunnyVideo,
+  bunnyStreamEmbedUrl,
+} from './lib/bunnyStream.mjs';
 import { z } from 'zod';
 
 function slugify(input) {
@@ -552,10 +559,17 @@ export function createApp() {
         title,
         subtitle: body.subtitle || null,
         description: body.description || null,
-        image: image || '/images/banners/poster-movie.svg',
+        image: image || '/imagens/banners/poster-movie.svg',
         linkedMovieId,
         linkedSeriesId,
         customUrl: body.custom_url || null,
+        detailUrl: body.detail_url ? String(body.detail_url) : null,
+        bannerObjectPosition: body.banner_object_position
+          ? String(body.banner_object_position)
+          : null,
+        heroYear: body.hero_year != null ? String(body.hero_year) : null,
+        heroRating: body.hero_rating != null ? String(body.hero_rating) : null,
+        heroCategory: body.hero_category != null ? String(body.hero_category) : null,
         sortOrder: body.order != null ? Number(body.order) : 0,
         isActive: body.active !== false,
       },
@@ -581,6 +595,12 @@ export function createApp() {
     if (body.order !== undefined) data.sortOrder = Number(body.order);
     if (body.active !== undefined) data.isActive = !!body.active;
     if (body.custom_url !== undefined) data.customUrl = body.custom_url;
+    if (body.detail_url !== undefined) data.detailUrl = body.detail_url || null;
+    if (body.banner_object_position !== undefined)
+      data.bannerObjectPosition = body.banner_object_position || null;
+    if (body.hero_year !== undefined) data.heroYear = body.hero_year || null;
+    if (body.hero_rating !== undefined) data.heroRating = body.hero_rating || null;
+    if (body.hero_category !== undefined) data.heroCategory = body.hero_category || null;
     if (body.series_id !== undefined) {
       const linkedId = String(body.series_id || '').trim();
       data.linkedMovieId = null;
@@ -604,6 +624,94 @@ export function createApp() {
     const id = c.req.param('id');
     await prisma.heroBanner.delete({ where: { id } });
     return c.json({ ok: true });
+  });
+
+  /** Bunny Stream: listar vídeos da biblioteca (admin; chave só no servidor). */
+  app.get('/admin/bunny/videos', async (c) => {
+    const denied = await requireAdmin(c);
+    if (denied) return denied;
+    const cfg = getBunnyStreamConfig();
+    if (!cfg) {
+      return c.json(
+        {
+          error:
+            'Bunny Stream não configurado. Defina BUNNY_STREAM_LIBRARY_ID e BUNNY_STREAM_API_KEY no .env (ver .env.example).',
+        },
+        503
+      );
+    }
+    const page = Math.max(1, Number(c.req.query('page') || 1));
+    const itemsPerPage = Math.min(100, Math.max(1, Number(c.req.query('itemsPerPage') || 50)));
+    const collection =
+      String(c.req.query('collection') || c.req.query('collectionId') || '').trim() ||
+      String(process.env.BUNNY_STREAM_COLLECTION_ID || '').trim();
+    const search = String(c.req.query('search') || '').trim();
+    const orderBy = String(c.req.query('orderBy') || '').trim();
+    try {
+      const data = await listBunnyVideos(cfg, {
+        page,
+        itemsPerPage,
+        collection: collection || undefined,
+        search: search || undefined,
+        orderBy: orderBy || undefined,
+      });
+      const lib = cfg.libraryId;
+      const enriched =
+        data && Array.isArray(data.items)
+          ? {
+              ...data,
+              items: data.items.map((it) => {
+                const guid = it?.guid || it?.Guid;
+                return guid
+                  ? { ...it, embedUrl: bunnyStreamEmbedUrl(lib, guid) }
+                  : it;
+              }),
+            }
+          : data;
+      return c.json(enriched);
+    } catch (e) {
+      const status = Number(e.status) >= 400 ? Number(e.status) : 502;
+      return c.json({ error: String(e.message || e) }, status);
+    }
+  });
+
+  app.get('/admin/bunny/videos/:videoId', async (c) => {
+    const denied = await requireAdmin(c);
+    if (denied) return denied;
+    const cfg = getBunnyStreamConfig();
+    if (!cfg) return c.json({ error: 'Bunny Stream não configurado.' }, 503);
+    const videoId = c.req.param('videoId');
+    try {
+      const data = await getBunnyVideo(cfg, videoId);
+      const embedUrl = bunnyStreamEmbedUrl(cfg.libraryId, videoId);
+      return c.json({ ...data, embedUrl });
+    } catch (e) {
+      const status = Number(e.status) >= 400 ? Number(e.status) : 502;
+      return c.json({ error: String(e.message || e) }, status);
+    }
+  });
+
+  app.post('/admin/bunny/videos', async (c) => {
+    const denied = await requireAdmin(c);
+    if (denied) return denied;
+    const cfg = getBunnyStreamConfig();
+    if (!cfg) return c.json({ error: 'Bunny Stream não configurado.' }, 503);
+    let body;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: 'JSON inválido' }, 400);
+    }
+    const title = String(body?.title || 'Novo vídeo').trim() || 'Novo vídeo';
+    try {
+      const created = await createBunnyVideo(cfg, { title });
+      const guid = created?.guid || created?.Guid;
+      const embedUrl = guid ? bunnyStreamEmbedUrl(cfg.libraryId, guid) : null;
+      return c.json({ ...created, embedUrl });
+    } catch (e) {
+      const status = Number(e.status) >= 400 ? Number(e.status) : 502;
+      return c.json({ error: String(e.message || e) }, status);
+    }
   });
 
   /** Resolver slug → id (filme ou série) */
