@@ -25,6 +25,13 @@ import {
   mockTableCacheDelete,
   mockTableCacheClearAll,
 } from '@/api/mockTableReadCache';
+import { isFirebaseAuthMode } from '@/lib/firebaseApp';
+import {
+  waitFirebaseAuthReady,
+  getCachedFirebaseAppUser,
+  signOutFirebase,
+} from '@/lib/firebaseAuth';
+import { isFirebaseStorageEnabled, uploadCatalogImageFile } from '@/lib/firebaseStorage';
 
 /**
  * Persistência: localStorage (cache) + em dev ficheiro `data/catalog-backup.json` via catalogPersistence.
@@ -385,9 +392,24 @@ async function persistUser(u) {
 export const localMockClient = {
   auth: {
     async me() {
+      if (isFirebaseAuthMode()) {
+        await waitFirebaseAuthReady();
+        const u = getCachedFirebaseAppUser();
+        if (!u) {
+          const err = new Error('auth_required');
+          err.code = 'auth_required';
+          throw err;
+        }
+        return u;
+      }
       return getCurrentUser();
     },
     logout() {
+      if (isFirebaseAuthMode()) {
+        signOutFirebase();
+        cachedUser = null;
+        return;
+      }
       cachedUser = null;
       try {
         sessionStorage.removeItem(SS_MOCK_ADMIN_SESSION);
@@ -487,8 +509,8 @@ export const localMockClient = {
   integrations: {
     Core: {
       /**
-       * Data URL (base64) para a URL sobreviver a localStorage + reload.
-       * Imagens grandes são comprimidas antes — senão JSON do catálogo estoura quota (~5MB).
+       * Com Firebase Storage activo, envia para cloud e devolve URL estável.
+       * Caso contrário mantém o modo local (data URL + IDB/localStorage).
        */
       async UploadFile({ file }) {
         let f = file;
@@ -496,6 +518,10 @@ export const localMockClient = {
           f = await compressImageFileForStorage(file);
         } catch {
           /* mantém original */
+        }
+        if (isFirebaseStorageEnabled()) {
+          const file_url = await uploadCatalogImageFile(f, 'catalog-uploads');
+          return { file_url };
         }
         return new Promise((resolve, reject) => {
           const reader = new FileReader();

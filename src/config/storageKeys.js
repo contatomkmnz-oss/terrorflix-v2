@@ -62,3 +62,23 @@ export function getAllCatalogStorageKeys() {
     LS_HOME_CUSTOM_CATEGORY_ROWS,
   ];
 }
+
+/**
+ * Chaves partilhadas do catálogo/conteúdo que devem sobreviver entre browsers
+ * e deploys. Não inclui estado pessoal do utilizador (lista, histórico, perfil ativo, etc.).
+ */
+export function getSharedCatalogStorageKeys() {
+  return [
+    mockTableKey('Series'),
+    mockTableKey('Episode'),
+    mockTableKey('FeaturedBanner'),
+    mockTableKey('Avatar'),
+    mockTableKey('AccessCode'),
+    mockTableKey('ContentProposal'),
+    mockTableKey('Notification'),
+    LS_SERIES_SEED_TOMBSTONES,
+    LS_ADMIN_CATEGORY_PRESETS,
+    LS_HOME_NETFLIX_ROW_SLUG_ORDER,
+    LS_HOME_CUSTOM_CATEGORY_ROWS,
+  ];
+}

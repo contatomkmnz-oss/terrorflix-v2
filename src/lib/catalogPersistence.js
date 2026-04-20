@@ -3,6 +3,7 @@ import {
   LS_LAST_CATALOG_SAVE,
 } from '@/config/storageKeys';
 import { mockTableCacheClearAll } from '@/api/mockTableReadCache';
+import { syncSharedCatalogSnapshotToCloud } from '@/lib/firebaseCatalogSync';
 
 /** Versão do formato JSON de backup / ficheiro em disco. */
 export const CATALOG_BACKUP_SCHEMA_VERSION = 2;
@@ -10,13 +11,12 @@ export const CATALOG_BACKUP_SCHEMA_VERSION = 2;
 let _debounceTimer;
 
 /** Grava o snapshot actual no disco (dev/preview com servidor Vite). */
-async function postCatalogSnapshotToDisk() {
+async function postCatalogSnapshotToDisk(snapshot = buildCatalogSnapshot()) {
   try {
-    const snap = buildCatalogSnapshot();
     const res = await fetch('/__dev/catalog/backup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(snap),
+      body: JSON.stringify(snapshot),
     });
     if (!res.ok && res.status !== 404) {
       console.warn('[BailaFit] Autosave para data/catalog-backup.json falhou', res.status);
@@ -106,7 +106,11 @@ export function scheduleCatalogSync() {
 
   clearTimeout(_debounceTimer);
   _debounceTimer = setTimeout(() => {
-    postCatalogSnapshotToDisk();
+    const snapshot = buildCatalogSnapshot();
+    void Promise.allSettled([
+      postCatalogSnapshotToDisk(snapshot),
+      syncSharedCatalogSnapshotToCloud(snapshot),
+    ]);
   }, 700);
 }
 
@@ -115,7 +119,11 @@ export function scheduleCatalogSync() {
  */
 export function flushCatalogSyncNow() {
   clearTimeout(_debounceTimer);
-  return postCatalogSnapshotToDisk();
+  const snapshot = buildCatalogSnapshot();
+  return Promise.allSettled([
+    postCatalogSnapshotToDisk(snapshot),
+    syncSharedCatalogSnapshotToCloud(snapshot),
+  ]);
 }
 
 export function downloadCatalogBackupJson() {

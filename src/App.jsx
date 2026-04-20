@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/toaster"
 import { Toaster as SonnerToaster } from "sonner"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
+import { isFirebaseAuthMode } from '@/lib/firebaseApp';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -33,9 +34,11 @@ import AdminLogin from './pages/admin/AdminLogin';
 import AdminGate from './components/admin/AdminGate';
 import Subscription from './pages/Subscription';
 import AppLayout from './components/layout/AppLayout';
+import Login from './pages/Login';
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
+  const location = useLocation();
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
@@ -60,8 +63,13 @@ const AuthenticatedApp = () => {
     }
   }
 
+  if (isFirebaseAuthMode() && !user && location.pathname !== '/Login') {
+    return <Navigate to="/Login" replace />;
+  }
+
   return (
     <Routes>
+      <Route path="/Login" element={<Login />} />
       <Route path="/" element={<Navigate to="/ProfileSelect" replace />} />
       <Route path="/ProfileSelect" element={<ProfileSelect />} />
       <Route path="/ActivateCode" element={<ActivateCode />} />

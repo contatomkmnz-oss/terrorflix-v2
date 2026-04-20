@@ -1,17 +1,31 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
+import { isFirebaseAuthMode } from '@/lib/firebaseApp';
+import { subscribeFirebaseAuth } from '@/lib/firebaseAuth';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => !isFirebaseAuthMode());
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(true);
   const [authError, setAuthError] = useState(null);
   const [appPublicSettings, setAppPublicSettings] = useState({ id: 'local', public_settings: {} });
 
   useEffect(() => {
+    if (isFirebaseAuthMode()) {
+      setAuthError(null);
+      setIsLoadingPublicSettings(false);
+      const unsub = subscribeFirebaseAuth(({ user: u, ready }) => {
+        setUser(u);
+        setIsAuthenticated(!!u);
+        setIsLoadingAuth(!ready);
+        setAppPublicSettings({ id: 'local', public_settings: {} });
+      });
+      return unsub;
+    }
+
     let cancelled = false;
     (async () => {
       setAuthError(null);
@@ -48,7 +62,7 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
     base44.auth.logout();
     if (shouldRedirect) {
-      window.location.href = '/';
+      window.location.href = isFirebaseAuthMode() ? '/Login' : '/';
     }
   };
 

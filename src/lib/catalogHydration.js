@@ -3,6 +3,9 @@ import {
   validateCatalogSnapshot,
 } from '@/lib/catalogPersistence';
 import { LS_LAST_CATALOG_SAVE, mockTableKey } from '@/config/storageKeys';
+import { isFirebaseAuthMode } from '@/lib/firebaseApp';
+import { getCachedFirebaseAppUser, waitFirebaseAuthReady } from '@/lib/firebaseAuth';
+import { loadSharedCatalogSnapshotFromCloud } from '@/lib/firebaseCatalogSync';
 
 function lsGet(key) {
   try {
@@ -38,6 +41,28 @@ function isSeriesStorageUninitialized() {
  */
 export async function hydrateCatalogBootstrap() {
   if (typeof window === 'undefined') return;
+
+  if (isFirebaseAuthMode()) {
+    try {
+      await waitFirebaseAuthReady();
+      if (getCachedFirebaseAppUser()) {
+        const remoteSnapshot = await loadSharedCatalogSnapshotFromCloud();
+        if (remoteSnapshot) {
+          const v = validateCatalogSnapshot(remoteSnapshot);
+          if (v.ok) {
+            const remoteTime = parseSavedAt(remoteSnapshot.savedAt);
+            const lsTime = parseSavedAt(lsGet(LS_LAST_CATALOG_SAVE));
+            if (remoteTime > lsTime || isSeriesStorageUninitialized()) {
+              applyCatalogSnapshot(remoteSnapshot);
+              return;
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[BailaFit] Hidratação a partir do Firebase ignorada', e);
+    }
+  }
 
   try {
     const res = await fetch('/__dev/catalog/backup', { method: 'GET' });
