@@ -192,7 +192,7 @@ export default function AdminPersistence() {
           </Link>
           <div>
             <h1 className="text-2xl font-bold">Backup do catálogo</h1>
-            <p className="text-gray-400 text-sm mt-1">Persistência local segura · BailaFit Dance demo</p>
+            <p className="text-gray-400 text-sm mt-1">Persistência local segura · Terror 10 reais (pré-produção)</p>
           </div>
         </div>
 

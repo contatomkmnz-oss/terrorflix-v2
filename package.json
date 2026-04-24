@@ -1,7 +1,8 @@
 {
-  "name": "members-bailafit",
+  "name": "terror-10-reais",
   "private": true,
-  "version": "0.0.0",
+  "version": "2.0.0",
+  "description": "Terror 10 reais — snapshot Antes de ir para a Produção",
   "type": "module",
   "scripts": {
     "dev": "concurrently -k \"npm run dev:api\" \"npm run dev:vite\"",

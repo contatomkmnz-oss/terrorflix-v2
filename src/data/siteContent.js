@@ -6,10 +6,10 @@
  */
 
 export const brand = {
-  name: 'BailaFit Dance',
+  name: 'Terror 10 reais',
   /** Logo: ficheiro em public/imagens/ */
   logoUrl: '/imagens/logo-bailafit-dance.svg',
-  tagline: 'Área de membros · dança e fitness em streaming',
+  tagline: 'Streaming de terror · versão Antes de ir para a Produção',
 };
 
 /** Seção da home (campo «Seção especial» no admin) — valores internos usados em URLs /Browse?section= */
@@ -74,7 +74,7 @@ export const subscriptionPlans = [
 ];
 
 export const subscriptionPage = {
-  titleHtml: ['BailaFit', ' Dance', ' Premium'],
+  titleHtml: ['Terror', ' 10 reais', ' Premium'],
   subtitle: 'Escolha o plano ideal para você',
   paymentNote:
     'Modo local: nenhum pagamento real. Em produção, costuma-se usar PIX/cartão via gateway — aqui é apenas demonstração.',
@@ -88,7 +88,7 @@ export const demoMessages = {
 };
 
 export const footer = {
-  copyright: 'BailaFit Dance. Todos os direitos reservados.',
+  copyright: 'Terror 10 reais. Todos os direitos reservados.',
 };
 
 /** FAQ editável (ex.: landing ou página de ajuda futura) */
