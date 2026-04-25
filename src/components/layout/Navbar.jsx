@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, ChevronDown, ArrowLeft } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { readDesenhosActiveProfile } from '@/lib/localProfile';
 import NotificationCenter from '@/components/admin/NotificationCenter';
 
 export default function Navbar({ isStackRoute = false }) {
@@ -27,7 +28,7 @@ export default function Navbar({ isStackRoute = false }) {
     { label: 'Assinar', to: '/Subscription' },
   ];
 
-  const activeProfile = JSON.parse(localStorage.getItem('desenhos_active_profile') || 'null');
+  const activeProfile = readDesenhosActiveProfile();
 
   // Navbar de stack (SeriesDetail, Player) — só mostra botão voltar no mobile
   if (isStackRoute) {

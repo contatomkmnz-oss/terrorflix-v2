@@ -4,10 +4,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import HeroBanner from '../components/home/HeroBanner';
 import SeriesCarousel from '../components/home/SeriesCarousel';
 import ContinueWatching from '../components/home/ContinueWatching';
+import { readDesenhosActiveProfile } from '@/lib/localProfile';
 
 export default function Home() {
   const queryClient = useQueryClient();
-  const activeProfile = JSON.parse(localStorage.getItem('desenhos_active_profile') || 'null');
+  const activeProfile = readDesenhosActiveProfile();
 
   const { data: allSeries = [] } = useQuery({
     queryKey: ['series'],

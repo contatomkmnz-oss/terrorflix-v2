@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
+import { readDesenhosActiveProfile } from '@/lib/localProfile';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Play, SkipForward, List, X } from 'lucide-react';
@@ -41,7 +42,7 @@ export default function Player() {
   const episodeId = params.get('episodeId');
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const activeProfile = JSON.parse(localStorage.getItem('desenhos_active_profile') || 'null');
+  const activeProfile = readDesenhosActiveProfile();
   const progressInterval = useRef(null);
   const [showSidebar, setShowSidebar] = useState(false);
   const [autoplayCountdown, setAutoplayCountdown] = useState(null);

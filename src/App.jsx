@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import React, { useEffect, Component } from 'react'
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
@@ -36,11 +36,56 @@ function RedirectTo({ pathname }) {
   return <Navigate to={{ pathname, search, hash }} replace />;
 }
 
-const BASENAME = (() => {
-  const b = import.meta.env.BASE_URL || '/'
-  if (b === '/' || b === './') return '/'
-  return b.endsWith('/') ? b.slice(0, -1) : b
-})()
+// React Router: basename com barra inicial, sem barra final (Vite: BASE_URL costuma ser "/")
+const BASENAME = (import.meta.env.BASE_URL || '/').replace(/\/$/, '') || '/'
+
+class AppErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+  componentDidCatch(error, info) {
+    console.error('AppErrorBoundary', error, info);
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="min-h-screen bg-[#0F0F0F] text-white flex flex-col items-center justify-center gap-4 p-6 text-center">
+          <p className="max-w-md text-sm text-gray-300">
+            Ocorreu um erro ao mostrar a aplicação. Pode recarregar ou repor o perfil local.
+          </p>
+          <div className="flex flex-wrap gap-2 justify-center">
+            <button
+              type="button"
+              className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black"
+              onClick={() => window.location.reload()}
+            >
+              Recarregar
+            </button>
+            <button
+              type="button"
+              className="rounded-lg border border-white/20 px-4 py-2 text-sm"
+              onClick={() => {
+                try {
+                  localStorage.removeItem('desenhos_active_profile');
+                } catch (e) {
+                  /* empty */
+                }
+                window.location.href = `${import.meta.env.BASE_URL || '/'}${'ProfileSelect'.replace(/^\//, '')}`;
+              }}
+            >
+              Limpar perfil
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function AuthRequiredScreen({ onLogin }) {
   useEffect(() => {
@@ -160,7 +205,9 @@ function App() {
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
         <Router basename={BASENAME}>
-          <AuthenticatedApp />
+          <AppErrorBoundary>
+            <AuthenticatedApp />
+          </AppErrorBoundary>
         </Router>
         <Toaster />
       </QueryClientProvider>

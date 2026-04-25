@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
+import { readDesenhosActiveProfile } from '@/lib/localProfile';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Play, X, Heart } from 'lucide-react';
@@ -7,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function MyListPage() {
   const queryClient = useQueryClient();
-  const activeProfile = JSON.parse(localStorage.getItem('desenhos_active_profile') || 'null');
+  const activeProfile = readDesenhosActiveProfile();
 
   const { data: myListItems = [] } = useQuery({
     queryKey: ['myList', activeProfile?.id],

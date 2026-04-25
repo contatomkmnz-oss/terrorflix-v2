@@ -46,42 +46,32 @@ export const AuthProvider = ({ children }) => {
         }
         setIsLoadingPublicSettings(false);
       } catch (appError) {
-        console.error('App state check failed:', appError);
-        
-        // Handle app-level errors
-        if (appError.status === 403 && appError.data?.extra_data?.reason) {
+        console.warn('App public-settings check:', appError?.message || appError);
+        setIsLoadingPublicSettings(false);
+
+        if (appError?.status === 403 && appError.data?.extra_data?.reason) {
           const reason = appError.data.extra_data.reason;
           if (reason === 'auth_required') {
-            setAuthError({
-              type: 'auth_required',
-              message: 'Authentication required'
-            });
+            setAuthError({ type: 'auth_required', message: 'Authentication required' });
           } else if (reason === 'user_not_registered') {
-            setAuthError({
-              type: 'user_not_registered',
-              message: 'User not registered for this app'
-            });
+            setAuthError({ type: 'user_not_registered', message: 'User not registered for this app' });
           } else {
-            setAuthError({
-              type: reason,
-              message: appError.message
-            });
+            setAuthError({ type: reason, message: appError.message });
           }
+          setIsLoadingAuth(false);
         } else {
-          setAuthError({
-            type: 'unknown',
-            message: appError.message || 'Failed to load app'
-          });
+          // 404, rede, ou /api inexistente no static host — continuar; validar token se existir
+          setAuthError(null);
+          if (appParams.token) {
+            await checkUserAuth();
+          } else {
+            setIsLoadingAuth(false);
+          }
         }
-        setIsLoadingPublicSettings(false);
-        setIsLoadingAuth(false);
       }
     } catch (error) {
-      console.error('Unexpected error:', error);
-      setAuthError({
-        type: 'unknown',
-        message: error.message || 'An unexpected error occurred'
-      });
+      console.warn('checkAppState outer:', error?.message || error);
+      setAuthError(null);
       setIsLoadingPublicSettings(false);
       setIsLoadingAuth(false);
     }

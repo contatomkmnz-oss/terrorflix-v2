@@ -5,13 +5,14 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { Play, Plus, Check, CheckCircle2, Lock } from 'lucide-react';
 
 import { motion } from 'framer-motion';
+import { readDesenhosActiveProfile } from '@/lib/localProfile';
 
 export default function SeriesDetail() {
   const { id: idFromPath } = useParams();
   const [searchParams] = useSearchParams();
   const seriesId = idFromPath || searchParams.get('id');
   const queryClient = useQueryClient();
-  const activeProfile = JSON.parse(localStorage.getItem('desenhos_active_profile') || 'null');
+  const activeProfile = readDesenhosActiveProfile();
   const [selectedSeason, setSelectedSeason] = useState(1);
 
   useEffect(() => {

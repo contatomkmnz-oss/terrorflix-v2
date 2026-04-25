@@ -5,6 +5,7 @@ import BottomNav from './BottomNav';
 import PullToRefresh from './PullToRefresh';
 import SubscriptionBanner from '@/components/subscription/SubscriptionBanner';
 import { base44 } from '@/api/base44Client';
+import { readDesenhosActiveProfile } from '@/lib/localProfile';
 import { useQueryClient } from '@tanstack/react-query';
 
 // Abas que preservam scroll ao voltar
@@ -77,7 +78,7 @@ export default function AppLayout() {
     // Verifica se há perfil ativo (apenas em rotas que precisam de perfil)
     const needsProfile = !NO_PROFILE_ROUTES.some(r => location.pathname.startsWith(r));
     if (needsProfile) {
-      const activeProfile = localStorage.getItem('desenhos_active_profile');
+      const activeProfile = readDesenhosActiveProfile();
       if (!activeProfile) {
         navigate('/ProfileSelect', { replace: true });
       }
