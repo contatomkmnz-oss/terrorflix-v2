@@ -57,7 +57,7 @@ export default function MyListPage() {
                   exit={{ opacity: 0, scale: 0.9 }}
                   className="group relative"
                 >
-                  <Link to={`/SeriesDetail?id=${s.id}`}>
+                  <Link to={`/series/${s.id}`}>
                     <div className="aspect-[2/3] rounded-lg overflow-hidden bg-[#1A1A1A]">
                       {s.cover_url ? (
                         <img src={s.cover_url} alt={s.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />

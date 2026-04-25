@@ -87,14 +87,14 @@ export default function HeroBanner({ seriesList }) {
             )}
             <div className="flex items-center gap-3">
               <Link
-                to={`/SeriesDetail?id=${series.id}`}
+                to={`/series/${series.id}`}
                 className="flex items-center gap-1.5 bg-white text-black px-2.5 py-1.5 md:px-6 md:py-3 rounded-md font-semibold text-xs md:text-base hover:bg-white/90 transition-all shadow-lg"
               >
                 <Play className="w-3 h-3 md:w-5 md:h-5 fill-current" />
                 Assistir
               </Link>
               <Link
-                to={`/SeriesDetail?id=${series.id}`}
+                to={`/series/${series.id}`}
                 className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm text-white px-2.5 py-1.5 md:px-6 md:py-3 rounded-md font-semibold text-xs md:text-base hover:bg-white/30 transition-all whitespace-nowrap"
               >
                 <Info className="w-3 h-3 md:w-5 md:h-5" />

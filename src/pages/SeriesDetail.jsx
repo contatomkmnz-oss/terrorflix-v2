@@ -1,17 +1,22 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { Play, Plus, Check, CheckCircle2, Lock } from 'lucide-react';
 
 import { motion } from 'framer-motion';
 
 export default function SeriesDetail() {
-  const params = new URLSearchParams(window.location.search);
-  const seriesId = params.get('id');
+  const { id: idFromPath } = useParams();
+  const [searchParams] = useSearchParams();
+  const seriesId = idFromPath || searchParams.get('id');
   const queryClient = useQueryClient();
   const activeProfile = JSON.parse(localStorage.getItem('desenhos_active_profile') || 'null');
   const [selectedSeason, setSelectedSeason] = useState(1);
+
+  useEffect(() => {
+    setSelectedSeason(1);
+  }, [seriesId]);
 
   const { data: series } = useQuery({
     queryKey: ['series', seriesId],

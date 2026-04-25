@@ -11,7 +11,15 @@ import { useQueryClient } from '@tanstack/react-query';
 const TAB_ROUTES = ['/Home', '/Browse', '/Search', '/MyList', '/Subscription'];
 
 // Rotas "stack" — sem BottomNav, com back button no header
-const STACK_ROUTES = ['/SeriesDetail', '/Player'];
+function isStackPath(pathname) {
+  return (
+    pathname.startsWith('/Player') ||
+    pathname.startsWith('/player') ||
+    pathname.startsWith('/SeriesDetail') ||
+    pathname.startsWith('/seriesdetail') ||
+    pathname.startsWith('/series/')
+  );
+}
 
 // Rotas que NÃO precisam de perfil ativo (admin e perfil select em si)
 const NO_PROFILE_ROUTES = ['/ProfileSelect', '/Admin', '/AdminSeries', '/AdminEpisodes', '/AdminUsers', '/AdminCodes', '/AdminProposals', '/AdminAvatars', '/AdminEpisodeCreator', '/AdminSubscriptions', '/AdminMetrics', '/AdminBanner', '/Subscription', '/ActivateCode'];
@@ -76,7 +84,7 @@ export default function AppLayout() {
     }
   }, [location.pathname]);
 
-  const isStackRoute = STACK_ROUTES.some(r => location.pathname.startsWith(r));
+  const isStackRoute = isStackPath(location.pathname);
 
   // Loading
   if (subState === null) {

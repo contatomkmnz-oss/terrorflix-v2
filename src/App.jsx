@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -29,6 +29,18 @@ import AdminMetrics from './pages/admin/AdminMetrics';
 import AdminBanner from './pages/admin/AdminBanner';
 import Subscription from './pages/Subscription';
 import AppLayout from './components/layout/AppLayout';
+
+/** Redireciona para rota canónica (PascalCase) mantendo ?query e #hash. */
+function RedirectTo({ pathname }) {
+  const { search, hash } = useLocation();
+  return <Navigate to={{ pathname, search, hash }} replace />;
+}
+
+const BASENAME = (() => {
+  const b = import.meta.env.BASE_URL || '/'
+  if (b === '/' || b === './') return '/'
+  return b.endsWith('/') ? b.slice(0, -1) : b
+})()
 
 function AuthRequiredScreen({ onLogin }) {
   useEffect(() => {
@@ -84,14 +96,41 @@ const AuthenticatedApp = () => {
 
   return (
     <Routes>
+      {/* ——— Compatibilidade: minúsculas, typos, slugs (preserva ? e #) ——— */}
+      <Route path="/home" element={<RedirectTo pathname="/Home" />} />
+      <Route path="/browse" element={<RedirectTo pathname="/Browse" />} />
+      <Route path="/search" element={<RedirectTo pathname="/Search" />} />
+      <Route path="/mylist" element={<RedirectTo pathname="/MyList" />} />
+      <Route path="/subscription" element={<RedirectTo pathname="/Subscription" />} />
+      <Route path="/profileselect" element={<RedirectTo pathname="/ProfileSelect" />} />
+      <Route path="/activatecode" element={<RedirectTo pathname="/ActivateCode" />} />
+      <Route path="/propose" element={<RedirectTo pathname="/Propose" />} />
+      <Route path="/player" element={<RedirectTo pathname="/Player" />} />
+      <Route path="/seriesdetail" element={<RedirectTo pathname="/SeriesDetail" />} />
+      <Route path="/admin" element={<RedirectTo pathname="/Admin" />} />
+      <Route path="/adminseries" element={<RedirectTo pathname="/AdminSeries" />} />
+      <Route path="/adminepisodes" element={<RedirectTo pathname="/AdminEpisodes" />} />
+      <Route path="/adminusers" element={<RedirectTo pathname="/AdminUsers" />} />
+      <Route path="/admincodes" element={<RedirectTo pathname="/AdminCodes" />} />
+      <Route path="/adminproposals" element={<RedirectTo pathname="/AdminProposals" />} />
+      <Route path="/adminavatars" element={<RedirectTo pathname="/AdminAvatars" />} />
+      <Route path="/adminepisodecreator" element={<RedirectTo pathname="/AdminEpisodeCreator" />} />
+      <Route path="/adminsubscriptions" element={<RedirectTo pathname="/AdminSubscriptions" />} />
+      <Route path="/adminmetrics" element={<RedirectTo pathname="/AdminMetrics" />} />
+      <Route path="/adminbanner" element={<RedirectTo pathname="/AdminBanner" />} />
+      <Route path="/Home/" element={<RedirectTo pathname="/Home" />} />
+      <Route path="/Browse/" element={<RedirectTo pathname="/Browse" />} />
+      <Route path="/Search/" element={<RedirectTo pathname="/Search" />} />
+
       <Route path="/" element={<Navigate to="/ProfileSelect" replace />} />
       <Route path="/ProfileSelect" element={<ProfileSelect />} />
       <Route path="/ActivateCode" element={<ActivateCode />} />
       <Route path="/Player" element={<Player />} />
-      
+
       <Route element={<AppLayout />}>
         <Route path="/Home" element={<Home />} />
         <Route path="/SeriesDetail" element={<SeriesDetail />} />
+        <Route path="/series/:id" element={<SeriesDetail />} />
         <Route path="/Search" element={<Search />} />
         <Route path="/MyList" element={<MyListPage />} />
         <Route path="/Browse" element={<Browse />} />
@@ -109,7 +148,7 @@ const AuthenticatedApp = () => {
         <Route path="/AdminMetrics" element={<AdminMetrics />} />
         <Route path="/AdminBanner" element={<AdminBanner />} />
       </Route>
-      
+
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
@@ -120,7 +159,7 @@ function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
-        <Router>
+        <Router basename={BASENAME}>
           <AuthenticatedApp />
         </Router>
         <Toaster />

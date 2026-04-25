@@ -4,11 +4,18 @@ import { useLocation } from 'react-router-dom';
 
 // Tab roots — transition lateral (como nativo)
 const TAB_ROUTES = ['/Home', '/Browse', '/Search', '/MyList', '/Subscription'];
-// Detail/stack routes — slide up (push modal nativo)
-const STACK_ROUTES = ['/SeriesDetail', '/Player'];
+function isStackPath(pathname) {
+  return (
+    pathname.startsWith('/Player') ||
+    pathname.startsWith('/player') ||
+    pathname.startsWith('/SeriesDetail') ||
+    pathname.startsWith('/seriesdetail') ||
+    pathname.startsWith('/series/')
+  );
+}
 
 function getTransitionType(pathname) {
-  if (STACK_ROUTES.some(r => pathname.startsWith(r))) return 'stack';
+  if (isStackPath(pathname)) return 'stack';
   if (TAB_ROUTES.some(r => pathname.startsWith(r))) return 'tab';
   return 'fade';
 }

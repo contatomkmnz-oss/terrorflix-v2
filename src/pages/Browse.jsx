@@ -70,7 +70,7 @@ export default function Browse() {
           >
             {filtered.map(s => (
               <motion.div key={s.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <Link to={`/SeriesDetail?id=${s.id}`} className="group block">
+                <Link to={`/series/${s.id}`} className="group block">
                   <div className="aspect-[2/3] rounded-lg overflow-hidden bg-[#1A1A1A] relative">
                     {s.cover_url ? (
                       <img src={s.cover_url} alt={s.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />

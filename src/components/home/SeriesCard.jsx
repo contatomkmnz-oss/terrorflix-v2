@@ -19,7 +19,7 @@ export default function SeriesCard({ series, isInList, onToggleList, episodes = 
       whileHover={{ scale: 1.05, zIndex: 10 }}
       transition={{ duration: 0.2 }}
     >
-      <Link to={`/SeriesDetail?id=${series.id}`}>
+      <Link to={`/series/${series.id}`}>
         <div className="aspect-[2/3] rounded-lg overflow-hidden bg-[#1A1A1A] shadow-lg relative">
           {series.cover_url ? (
             <img
@@ -55,7 +55,7 @@ export default function SeriesCard({ series, isInList, onToggleList, episodes = 
             <p className="text-xs font-semibold text-white truncate mb-2">{series.title}</p>
             <div className="flex items-center gap-2">
               <Link
-                to={`/SeriesDetail?id=${series.id}`}
+                to={`/series/${series.id}`}
                 className="w-7 h-7 rounded-full bg-white flex items-center justify-center hover:bg-gray-200 transition-colors"
               >
                 <Play className="w-3.5 h-3.5 text-black fill-current ml-0.5" />

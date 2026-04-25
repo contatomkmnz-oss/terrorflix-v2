@@ -92,7 +92,7 @@ export default function Search() {
             className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4"
           >
             {results.map(s => (
-              <Link key={s.id} to={`/SeriesDetail?id=${s.id}`} className="group">
+              <Link key={s.id} to={`/series/${s.id}`} className="group">
                 <div className="aspect-[2/3] rounded-lg overflow-hidden bg-[#1A1A1A] relative">
                   {s.cover_url ? (
                     <img src={s.cover_url} alt={s.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
