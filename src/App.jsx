@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
@@ -29,6 +30,32 @@ import AdminBanner from './pages/admin/AdminBanner';
 import Subscription from './pages/Subscription';
 import AppLayout from './components/layout/AppLayout';
 
+function AuthRequiredScreen({ onLogin }) {
+  useEffect(() => {
+    onLogin();
+    // Uma tentativa automática; o botão repete se o redirect falhar
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-6 bg-[#0F0F0F] px-6 text-center text-white">
+      <h1 className="text-2xl font-black">
+        <span className="text-[#E50914]">Desenhos</span>
+        <span className="text-[#FFC107]">Flix</span>
+      </h1>
+      <p className="max-w-sm text-sm text-gray-400">A abrir a página de início de sessão…</p>
+      <div className="h-8 w-8 border-2 border-[#E50914] border-t-transparent rounded-full animate-spin" />
+      <button
+        type="button"
+        onClick={onLogin}
+        className="rounded-lg bg-white px-6 py-2.5 text-sm font-semibold text-black transition hover:bg-white/90"
+      >
+        Entrar com a minha conta
+      </button>
+    </div>
+  );
+}
+
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
 
@@ -49,9 +76,9 @@ const AuthenticatedApp = () => {
   if (authError) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      navigateToLogin();
-      return null;
+    }
+    if (authError.type === 'auth_required') {
+      return <AuthRequiredScreen onLogin={navigateToLogin} />;
     }
   }
 

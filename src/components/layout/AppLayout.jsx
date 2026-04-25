@@ -56,11 +56,15 @@ export default function AppLayout() {
 
   useEffect(() => {
     // Garante trial e busca assinatura
-    base44.functions.invoke('ensureTrialSubscription', {}).then(res => {
-      setSubState(res.data);
-    }).catch(() => {
-      setSubState({ isActive: false, subscription: null, isTrial: false });
-    });
+    base44.functions
+      .invoke('ensureTrialSubscription', {})
+      .then((res) => {
+        const data = res?.data ?? { isActive: false, subscription: null, isTrial: false };
+        setSubState(data);
+      })
+      .catch(() => {
+        setSubState({ isActive: false, subscription: null, isTrial: false });
+      });
 
     // Verifica se há perfil ativo (apenas em rotas que precisam de perfil)
     const needsProfile = !NO_PROFILE_ROUTES.some(r => location.pathname.startsWith(r));
@@ -86,7 +90,11 @@ export default function AppLayout() {
     );
   }
 
-  const { isActive, subscription, isTrial } = subState;
+  const { isActive, subscription, isTrial } = subState || {
+    isActive: false,
+    subscription: null,
+    isTrial: false,
+  };
 
   return (
     <div className="min-h-screen bg-[#0F0F0F] text-white">
