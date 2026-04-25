@@ -2,7 +2,7 @@ import React from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Mail } from 'lucide-react';
+import { ArrowLeft, Users, Mail, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function AdminUsers() {

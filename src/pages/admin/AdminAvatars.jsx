@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import ImageUpload from '@/components/admin/ImageUpload';
-import ProfileAvatarImage from '@/components/profile/ProfileAvatarImage';
 
 export default function AdminAvatars() {
   const queryClient = useQueryClient();
@@ -34,17 +33,17 @@ export default function AdminAvatars() {
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center gap-4 mb-6">
           <Link to="/Admin" className="text-gray-400 hover:text-white"><ArrowLeft className="w-5 h-5" /></Link>
-          <h1 className="text-2xl font-bold flex-1">Avatares de perfil</h1>
+          <h1 className="text-2xl font-bold flex-1">Avatares</h1>
           <Button onClick={() => setDialogOpen(true)} className="bg-[#E50914] hover:bg-[#FF3D3D]">
-            <Plus className="w-4 h-4 mr-2" /> Novo avatar
+            <Plus className="w-4 h-4 mr-2" /> Novo Avatar
           </Button>
         </div>
 
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
           {avatars.map(av => (
             <div key={av.id} className="relative group flex flex-col items-center">
-              <div className="w-full aspect-square rounded-lg overflow-hidden bg-[#1A1A1A] ring-1 ring-white/10 transition-transform duration-200 group-hover:scale-105">
-                <ProfileAvatarImage src={av.image_url} alt={av.name} className="h-full w-full object-cover" />
+              <div className="w-full aspect-square rounded-lg overflow-hidden bg-[#1A1A1A]">
+                <img src={av.image_url} alt={av.name} className="w-full h-full object-cover" />
               </div>
               <p className="text-xs text-gray-400 mt-1 truncate w-full text-center">{av.name}</p>
               <button
@@ -64,9 +63,9 @@ export default function AdminAvatars() {
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogContent className="bg-[#1A1A1A] border-white/10 text-white max-w-sm">
-            <DialogHeader><DialogTitle>Novo avatar</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>Novo Avatar</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <Input placeholder="Nome (ex: Fantasma, Caveira...)" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="bg-[#2A2A2A] border-none" />
+              <Input placeholder="Nome (ex: Goku, Mickey...)" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="bg-[#2A2A2A] border-none" />
               <ImageUpload value={form.image_url} onChange={v => setForm({ ...form, image_url: v })} placeholder="Clique para enviar a imagem" aspectRatio="square" />
               <Button onClick={() => createMut.mutate(form)} disabled={!form.name.trim() || !form.image_url.trim()} className="w-full bg-[#E50914] hover:bg-[#FF3D3D]">
                 Salvar

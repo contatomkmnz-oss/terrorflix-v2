@@ -1,9 +1,7 @@
 import { Toaster } from "@/components/ui/toaster"
-import { Toaster as SonnerToaster } from "sonner"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
-import { isFirebaseAuthMode } from '@/lib/firebaseApp';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -28,25 +26,19 @@ import AdminEpisodeCreator from './pages/admin/AdminEpisodeCreator';
 import AdminSubscriptions from './pages/admin/AdminSubscriptions';
 import AdminMetrics from './pages/admin/AdminMetrics';
 import AdminBanner from './pages/admin/AdminBanner';
-import AdminPersistence from './pages/admin/AdminPersistence';
-import AdminCategories from './pages/admin/AdminCategories';
-import AdminLogin from './pages/admin/AdminLogin';
-import AdminGate from './components/admin/AdminGate';
 import Subscription from './pages/Subscription';
 import AppLayout from './components/layout/AppLayout';
-import Login from './pages/Login';
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
-  const location = useLocation();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-[#0F0F0F]">
         <div className="text-center">
           <h1 className="text-3xl font-black mb-4">
-            <span className="text-[#E50914]">Terror</span>
-            <span className="text-[#FFC107]"> 10 reais</span>
+            <span className="text-[#E50914]">Desenhos</span>
+            <span className="text-[#FFC107]">Flix</span>
           </h1>
           <div className="w-8 h-8 border-2 border-[#E50914] border-t-transparent rounded-full animate-spin mx-auto"></div>
         </div>
@@ -63,44 +55,32 @@ const AuthenticatedApp = () => {
     }
   }
 
-  if (isFirebaseAuthMode() && !user && location.pathname !== '/Login') {
-    return <Navigate to="/Login" replace />;
-  }
-
   return (
     <Routes>
-      <Route path="/Login" element={<Login />} />
       <Route path="/" element={<Navigate to="/ProfileSelect" replace />} />
       <Route path="/ProfileSelect" element={<ProfileSelect />} />
       <Route path="/ActivateCode" element={<ActivateCode />} />
-      <Route path="/AdminLogin" element={<AdminLogin />} />
       <Route path="/Player" element={<Player />} />
-
+      
       <Route element={<AppLayout />}>
         <Route path="/Home" element={<Home />} />
         <Route path="/SeriesDetail" element={<SeriesDetail />} />
-        <Route path="/movie/:slug" element={<SeriesDetail />} />
-        <Route path="/series/:slug" element={<SeriesDetail />} />
         <Route path="/Search" element={<Search />} />
         <Route path="/MyList" element={<MyListPage />} />
         <Route path="/Browse" element={<Browse />} />
         <Route path="/Propose" element={<Propose />} />
         <Route path="/Subscription" element={<Subscription />} />
-        <Route element={<AdminGate />}>
-          <Route path="/Admin" element={<AdminDashboard />} />
-          <Route path="/AdminSeries" element={<AdminSeries />} />
-          <Route path="/AdminEpisodes" element={<AdminEpisodes />} />
-          <Route path="/AdminUsers" element={<AdminUsers />} />
-          <Route path="/AdminCodes" element={<AdminCodes />} />
-          <Route path="/AdminProposals" element={<AdminProposals />} />
-          <Route path="/AdminAvatars" element={<AdminAvatars />} />
-          <Route path="/AdminEpisodeCreator" element={<AdminEpisodeCreator />} />
-          <Route path="/AdminSubscriptions" element={<AdminSubscriptions />} />
-          <Route path="/AdminMetrics" element={<AdminMetrics />} />
-          <Route path="/AdminBanner" element={<AdminBanner />} />
-          <Route path="/AdminPersistence" element={<AdminPersistence />} />
-          <Route path="/AdminCategories" element={<AdminCategories />} />
-        </Route>
+        <Route path="/Admin" element={<AdminDashboard />} />
+        <Route path="/AdminSeries" element={<AdminSeries />} />
+        <Route path="/AdminEpisodes" element={<AdminEpisodes />} />
+        <Route path="/AdminUsers" element={<AdminUsers />} />
+        <Route path="/AdminCodes" element={<AdminCodes />} />
+        <Route path="/AdminProposals" element={<AdminProposals />} />
+        <Route path="/AdminAvatars" element={<AdminAvatars />} />
+        <Route path="/AdminEpisodeCreator" element={<AdminEpisodeCreator />} />
+        <Route path="/AdminSubscriptions" element={<AdminSubscriptions />} />
+        <Route path="/AdminMetrics" element={<AdminMetrics />} />
+        <Route path="/AdminBanner" element={<AdminBanner />} />
       </Route>
       
       <Route path="*" element={<PageNotFound />} />
@@ -117,7 +97,6 @@ function App() {
           <AuthenticatedApp />
         </Router>
         <Toaster />
-        <SonnerToaster richColors closeButton position="top-center" theme="dark" />
       </QueryClientProvider>
     </AuthProvider>
   )

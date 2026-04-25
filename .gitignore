@@ -1,7 +1,4 @@
 #env
-# Backup local do catálogo (npm run dev). Remova a linha abaixo para versionar o ficheiro.
-data/catalog-backup.json
-
 .env
 .env.*
 
@@ -18,6 +15,7 @@ node_modules
 dist
 dist-ssr
 *.local
+.vercel
 
 # Editor directories and files
 .vscode/*
@@ -31,4 +29,3 @@ dist-ssr
 *.sw?
 
 .env
-.vercel

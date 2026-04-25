@@ -4,14 +4,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Play, X, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { readActiveProfile } from '@/lib/activeProfile';
-import { hasPlayableVideoLink } from '@/constants/contentType';
-import { seriesDetailHref } from '@/lib/seriesRoutes';
-import { publicAssetUrl } from '@/lib/publicAssetUrl';
 
 export default function MyListPage() {
   const queryClient = useQueryClient();
-  const activeProfile = readActiveProfile();
+  const activeProfile = JSON.parse(localStorage.getItem('desenhos_active_profile') || 'null');
 
   const { data: myListItems = [] } = useQuery({
     queryKey: ['myList', activeProfile?.id],
@@ -22,11 +18,6 @@ export default function MyListPage() {
   const { data: allSeries = [] } = useQuery({
     queryKey: ['series'],
     queryFn: () => base44.entities.Series.list(),
-  });
-
-  const { data: allEpisodes = [] } = useQuery({
-    queryKey: ['episodes'],
-    queryFn: () => base44.entities.Episode.list('-season', 500),
   });
 
   const removeMut = useMutation({
@@ -58,9 +49,7 @@ export default function MyListPage() {
         ) : (
           <AnimatePresence>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
-              {listSeries.map((s) => {
-                const canPlay = hasPlayableVideoLink(s, allEpisodes);
-                return (
+              {listSeries.map(s => (
                 <motion.div
                   key={s.id}
                   initial={{ opacity: 0, scale: 0.9 }}
@@ -68,22 +57,20 @@ export default function MyListPage() {
                   exit={{ opacity: 0, scale: 0.9 }}
                   className="group relative"
                 >
-                  <Link to={seriesDetailHref(s)}>
-                    <div className="aspect-[2/3] rounded-lg overflow-hidden bg-[#1A1A1A] relative">
+                  <Link to={`/SeriesDetail?id=${s.id}`}>
+                    <div className="aspect-[2/3] rounded-lg overflow-hidden bg-[#1A1A1A]">
                       {s.cover_url ? (
-                        <img src={publicAssetUrl(s.cover_url)} alt={s.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <img src={s.cover_url} alt={s.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#E50914]/20 to-[#1A1A1A] p-2">
                           <span className="text-xs font-bold text-center">{s.title}</span>
                         </div>
                       )}
-                      {canPlay && (
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
                         <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center">
                           <Play className="w-5 h-5 text-black fill-current ml-0.5" />
                         </div>
                       </div>
-                      )}
                     </div>
                     <p className="mt-2 text-sm font-medium truncate text-gray-300 group-hover:text-white">{s.title}</p>
                   </Link>
@@ -94,8 +81,7 @@ export default function MyListPage() {
                     <X className="w-4 h-4" />
                   </button>
                 </motion.div>
-              );
-              })}
+              ))}
             </div>
           </AnimatePresence>
         )}

@@ -1,0 +1,70 @@
+{
+  "name": "Subscription",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email do usu\u00e1rio assinante"
+    },
+    "plan": {
+      "type": "string",
+      "enum": [
+        "trial",
+        "semanal",
+        "mensal",
+        "premium",
+        "anual"
+      ],
+      "description": "Plano contratado"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "active",
+        "expired",
+        "cancelled"
+      ],
+      "default": "pending",
+      "description": "Status da assinatura"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "pix",
+        "credit_card"
+      ],
+      "description": "M\u00e9todo de pagamento"
+    },
+    "abacatepay_billing_id": {
+      "type": "string",
+      "description": "ID da cobran\u00e7a na AbacatePay"
+    },
+    "abacatepay_customer_id": {
+      "type": "string",
+      "description": "ID do cliente na AbacatePay"
+    },
+    "starts_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de in\u00edcio da assinatura"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de expira\u00e7\u00e3o da assinatura"
+    },
+    "pix_qr_code": {
+      "type": "string",
+      "description": "QR Code PIX em base64"
+    },
+    "pix_copy_paste": {
+      "type": "string",
+      "description": "C\u00f3digo PIX copia e cola"
+    }
+  },
+  "required": [
+    "user_email",
+    "plan"
+  ]
+}

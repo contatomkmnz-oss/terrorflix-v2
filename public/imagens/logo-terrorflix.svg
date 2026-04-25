@@ -1,0 +1,17 @@
+<svg width="760" height="180" viewBox="0 0 760 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="760" height="180" fill="transparent"/>
+  <path
+    d="M42 23C32.3 23 24 31.3 24 41V139C24 148.7 32.3 157 42 157C45.5 157 48.9 156 51.8 154.1L120.8 109.1C125.8 105.8 128.8 100.3 128.8 94.3C128.8 88.3 125.8 82.8 120.8 79.5L51.8 25.9C48.9 24 45.5 23 42 23Z"
+    fill="white"
+  />
+  <path
+    d="M55 53.8C55 49.2 60.2 46.4 64.1 48.9L101.1 72.5C104.7 74.8 104.8 80 101.2 82.4L64.2 107.1C60.3 109.7 55 106.9 55 102.2V53.8Z"
+    fill="#EF0000"
+  />
+  <text x="148" y="122" fill="white" font-family="Arial, Helvetica, sans-serif" font-size="82" font-weight="900" letter-spacing="-3">
+    TERROR
+  </text>
+  <text x="468" y="122" fill="#EF0000" font-family="Arial, Helvetica, sans-serif" font-size="82" font-weight="900" letter-spacing="-3">
+    FLIX
+  </text>
+</svg>

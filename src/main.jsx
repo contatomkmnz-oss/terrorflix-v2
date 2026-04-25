@@ -1,31 +1,11 @@
-import '@/index.css';
-import '@/globals.css';
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from '@/App.jsx'
+import '@/index.css'
 
-async function start() {
-  const { hydrateCatalogBootstrap } = await import('@/lib/catalogHydration');
-  await hydrateCatalogBootstrap();
+// Força dark mode permanentemente — o app é dark-only
+document.documentElement.classList.add('dark')
 
-  const { flushCatalogSyncNow } = await import('@/lib/catalogPersistence');
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') {
-      flushCatalogSyncNow();
-    }
-  });
-  window.addEventListener('pagehide', () => {
-    flushCatalogSyncNow();
-  });
-
-  const [{ default: App }, React, { default: ReactDOM }] = await Promise.all([
-    import('@/App.jsx'),
-    import('react'),
-    import('react-dom/client'),
-  ]);
-
-  document.documentElement.classList.add('dark');
-
-  ReactDOM.createRoot(document.getElementById('root')).render(
-    React.createElement(App)
-  );
-}
-
-start();
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <App />
+)

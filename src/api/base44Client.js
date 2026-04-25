@@ -1,12 +1,14 @@
-/**
- * Cliente de dados: mock local ou API real (Neon/Prisma) quando VITE_USE_REAL_API=true.
- * Com Firebase Auth activo, o mock local é usado para o catálogo e o login vem do Firebase.
- */
-import { localMockClient } from '@/api/localMockClient';
-import { realApiClient } from '@/api/realApiClient';
-import { isFirebaseAuthMode } from '@/lib/firebaseApp';
+import { createClient } from '@base44/sdk';
+import { appParams } from '@/lib/app-params';
 
-const useRealApi = import.meta.env.VITE_USE_REAL_API === 'true';
+const { appId, token, functionsVersion, appBaseUrl } = appParams;
 
-export const base44 =
-  useRealApi && !isFirebaseAuthMode() ? realApiClient : localMockClient;
+//Create a client with authentication required
+export const base44 = createClient({
+  appId,
+  token,
+  functionsVersion,
+  serverUrl: '',
+  requiresAuth: false,
+  appBaseUrl
+});

@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 
 const tabs = [
   { to: '/Home', icon: Home, label: 'Início' },
-  { to: '/Browse', icon: Grid2x2, label: 'Catálogo' },
+  { to: '/Browse', icon: Grid2x2, label: 'Séries' },
   { to: '/Search', icon: Search, label: 'Buscar' },
   { to: '/MyList', icon: Bookmark, label: 'Minha Lista' },
   { to: '/Subscription', icon: CreditCard, label: 'Assinar' },
@@ -29,15 +29,12 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#050508]/97 backdrop-blur-md border-t border-neon-violet/20"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0F0F0F]/97 backdrop-blur-md border-t border-white/10"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="flex items-center justify-around h-14">
         {tabs.map(({ to, icon: Icon, label }) => {
-          const active =
-            to === '/Browse'
-              ? location.pathname === '/Browse'
-              : location.pathname === to || (to !== '/Home' && location.pathname.startsWith(to));
+          const active = location.pathname === to || (to !== '/Home' && location.pathname.startsWith(to));
           const isPressed = pressed === to;
 
           return (
@@ -50,7 +47,7 @@ export default function BottomNav() {
               {active && (
                 <motion.div
                   layoutId="tab-indicator"
-                  className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-gradient-to-r from-neon-fuchsia to-neon-cyan shadow-[0_0_12px_rgba(34,211,238,0.5)]"
+                  className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-[#E50914] rounded-full"
                   transition={{ type: 'spring', stiffness: 500, damping: 40 }}
                 />
               )}
@@ -59,8 +56,8 @@ export default function BottomNav() {
                 transition={{ duration: 0.1 }}
                 className="flex flex-col items-center gap-0.5"
               >
-                <Icon className={`w-5 h-5 transition-colors duration-150 ${active ? 'text-neon-cyan' : 'text-gray-500'}`} />
-                <span className={`text-[10px] font-medium transition-colors duration-150 ${active ? 'text-neon-cyan' : 'text-gray-500'}`}>
+                <Icon className={`w-5 h-5 transition-colors duration-150 ${active ? 'text-[#E50914]' : 'text-gray-500'}`} />
+                <span className={`text-[10px] font-medium transition-colors duration-150 ${active ? 'text-[#E50914]' : 'text-gray-500'}`}>
                   {label}
                 </span>
               </motion.div>

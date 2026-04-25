@@ -1,25 +1,24 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { useOutlet, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useOutlet, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from './Navbar';
 import BottomNav from './BottomNav';
 import PullToRefresh from './PullToRefresh';
 import SubscriptionBanner from '@/components/subscription/SubscriptionBanner';
 import SubscriptionWall from '@/components/subscription/SubscriptionWall';
 import { base44 } from '@/api/base44Client';
-import { readActiveProfile } from '@/lib/activeProfile';
 import { useQueryClient } from '@tanstack/react-query';
 
 // Abas que preservam scroll ao voltar
 const TAB_ROUTES = ['/Home', '/Browse', '/Search', '/MyList', '/Subscription'];
 
 // Rotas "stack" — sem BottomNav, com back button no header
-const STACK_ROUTES = ['/SeriesDetail', '/Player', '/movie', '/series'];
+const STACK_ROUTES = ['/SeriesDetail', '/Player'];
 
 // Rotas que NÃO precisam de assinatura ativa
-const FREE_ROUTES = ['/Subscription', '/ActivateCode', '/ProfileSelect', '/Admin', '/AdminSeries', '/AdminEpisodes', '/AdminUsers', '/AdminCodes', '/AdminProposals', '/AdminAvatars', '/AdminEpisodeCreator', '/AdminSubscriptions', '/AdminMetrics', '/AdminBanner', '/AdminPersistence', '/AdminCategories'];
+const FREE_ROUTES = ['/Subscription', '/ActivateCode', '/ProfileSelect', '/Admin', '/AdminSeries', '/AdminEpisodes', '/AdminUsers', '/AdminCodes', '/AdminProposals', '/AdminAvatars', '/AdminEpisodeCreator', '/AdminSubscriptions', '/AdminMetrics', '/AdminBanner'];
 
 // Rotas que NÃO precisam de perfil ativo (admin e perfil select em si)
-const NO_PROFILE_ROUTES = ['/ProfileSelect', '/AdminLogin', '/Admin', '/AdminSeries', '/AdminEpisodes', '/AdminUsers', '/AdminCodes', '/AdminProposals', '/AdminAvatars', '/AdminEpisodeCreator', '/AdminSubscriptions', '/AdminMetrics', '/AdminBanner', '/AdminPersistence', '/AdminCategories', '/Subscription', '/ActivateCode'];
+const NO_PROFILE_ROUTES = ['/ProfileSelect', '/Admin', '/AdminSeries', '/AdminEpisodes', '/AdminUsers', '/AdminCodes', '/AdminProposals', '/AdminAvatars', '/AdminEpisodeCreator', '/AdminSubscriptions', '/AdminMetrics', '/AdminBanner', '/Subscription', '/ActivateCode'];
 
 export default function AppLayout() {
   const [subState, setSubState] = useState(null); // null = loading
@@ -73,7 +72,7 @@ export default function AppLayout() {
     // Verifica se há perfil ativo (apenas em rotas que precisam de perfil)
     const needsProfile = !NO_PROFILE_ROUTES.some(r => location.pathname.startsWith(r));
     if (needsProfile) {
-      const activeProfile = readActiveProfile();
+      const activeProfile = localStorage.getItem('desenhos_active_profile');
       if (!activeProfile) {
         navigate('/ProfileSelect', { replace: true });
       }
@@ -82,12 +81,12 @@ export default function AppLayout() {
 
   const isFreeRoute = FREE_ROUTES.some(r => location.pathname.startsWith(r));
   const isAdmin = userRole === 'admin';
-  const isStackRoute = STACK_ROUTES.some((r) => location.pathname.startsWith(r));
+  const isStackRoute = STACK_ROUTES.some(r => location.pathname.startsWith(r));
 
   // Loading
   if (subState === null) {
     return (
-      <div className="min-h-screen bg-[#050508] text-white">
+      <div className="min-h-screen bg-[#0F0F0F] text-white">
         <Navbar />
         <div className="flex items-center justify-center min-h-[80vh]">
           <div className="w-8 h-8 border-2 border-[#E50914] border-t-transparent rounded-full animate-spin" />
@@ -102,7 +101,7 @@ export default function AppLayout() {
   const showWall = !isFreeRoute && !isAdmin && !isActive;
 
   return (
-    <div className="min-h-screen bg-[#050508] text-white">
+    <div className="min-h-screen bg-[#0F0F0F] text-white">
       <Navbar isStackRoute={isStackRoute} />
       {showWall ? (
         <SubscriptionWall isTrial={isTrial} />

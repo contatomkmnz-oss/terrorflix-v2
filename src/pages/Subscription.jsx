@@ -4,27 +4,64 @@ import { useNavigate } from 'react-router-dom';
 import { Check, Star, Zap, Crown, Loader2, ArrowLeft, Calendar, AlertTriangle, Ban } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CheckoutModal from '@/components/subscription/CheckoutModal';
-import { subscriptionPlans as PLANS_CONFIG, subscriptionPage } from '@/data/siteContent';
 
-const ICON_MAP = { Zap, Star, Crown };
-const PLANS = PLANS_CONFIG.map(({ iconKey, ...rest }) => ({
-  ...rest,
-  icon: ICON_MAP[iconKey] || Zap,
-}));
+const PLANS = [
+  {
+    id: "mensal",
+    name: "Mensal",
+    price: "R$ 19,90",
+    priceValue: 1990,
+    period: "/mês",
+    icon: Zap,
+    color: "border-blue-500",
+    badge: null,
+    features: [
+      "Acesso a todo o catálogo",
+      "Qualidade HD",
+      "Múltiplos perfis",
+      "Sem anúncios",
+    ],
+  },
+  {
+    id: "premium",
+    name: "Premium",
+    price: "R$ 29,90",
+    priceValue: 2990,
+    period: "/mês",
+    icon: Star,
+    color: "border-[#E50914]",
+    badge: "Mais Popular",
+    features: [
+      "Tudo do plano Mensal",
+      "Qualidade Full HD",
+      "Downloads offline",
+      "Acesso antecipado a lançamentos",
+      "Suporte prioritário",
+    ],
+  },
+  {
+    id: "anual",
+    name: "Anual",
+    price: "R$ 199,00",
+    priceValue: 19900,
+    period: "/ano",
+    icon: Crown,
+    color: "border-[#FFC107]",
+    badge: "Melhor Custo-Benefício",
+    features: [
+      "Tudo do plano Premium",
+      "2 meses grátis",
+      "Qualidade 4K",
+      "Acesso vitalício ao histórico",
+    ],
+  },
+];
 
 const STATUS_CONFIG = {
-  active: {
-    label: 'Ativa',
-    color: 'text-neon-lime',
-    bg: 'bg-neon-lime/10 border-neon-lime/35 shadow-[0_0_20px_-8px_rgba(74,222,128,0.4)]',
-  },
-  pending: {
-    label: 'Pendente',
-    color: 'text-neon-orange',
-    bg: 'bg-neon-orange/10 border-neon-orange/35',
-  },
-  expired: { label: 'Expirada', color: 'text-gray-400', bg: 'bg-gray-500/10 border-gray-500/30' },
-  cancelled: { label: 'Cancelada', color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/30' },
+  active:    { label: "Ativa",    color: "text-green-400",  bg: "bg-green-500/10 border-green-500/30" },
+  pending:   { label: "Pendente", color: "text-yellow-400", bg: "bg-yellow-500/10 border-yellow-500/30" },
+  expired:   { label: "Expirada", color: "text-gray-400",   bg: "bg-gray-500/10 border-gray-500/30" },
+  cancelled: { label: "Cancelada",color: "text-red-400",    bg: "bg-red-500/10 border-red-500/30" },
 };
 
 export default function Subscription() {
@@ -74,32 +111,26 @@ export default function Subscription() {
     : null;
 
   return (
-    <div className="members-area px-4 pt-24 pb-8">
-      <div className="members-area-bg" aria-hidden />
-      <div className="members-area-inner max-w-5xl mx-auto">
+    <div className="min-h-screen bg-[#0F0F0F] px-4 pt-24 pb-8">
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4 mb-10">
-          <button
-            onClick={() => navigate(-1)}
-            className="text-gray-400 hover:text-neon-cyan transition-colors rounded-lg p-1 hover:bg-white/5"
-          >
+          <button onClick={() => navigate(-1)} className="text-gray-400 hover:text-white transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-3xl font-black tracking-tight">
-              <span className="bg-gradient-to-r from-neon-pink via-neon-fuchsia to-neon-cyan bg-clip-text text-transparent">
-                {subscriptionPage.titleHtml[0]}
-              </span>
-              <span className="text-neon-cyan">{subscriptionPage.titleHtml[1]}</span>
-              <span className="text-white">{subscriptionPage.titleHtml[2]}</span>
+            <h1 className="text-3xl font-black">
+              <span className="text-[#E50914]">Desenhos</span>
+              <span className="text-[#FFC107]">Flix</span>
+              <span className="text-white"> Premium</span>
             </h1>
-            <p className="text-gray-400 mt-1">{subscriptionPage.subtitle}</p>
+            <p className="text-gray-400 mt-1">Escolha o plano ideal para você</p>
           </div>
         </div>
 
         {loadingStatus ? (
           <div className="flex justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-neon-cyan drop-shadow-[0_0_12px_rgba(34,211,238,0.6)]" />
+            <Loader2 className="w-8 h-8 animate-spin text-[#E50914]" />
           </div>
         ) : (
           <>
@@ -123,13 +154,13 @@ export default function Subscription() {
                           <Calendar className="w-3.5 h-3.5" />
                           Válido até {new Date(sub.expires_at).toLocaleDateString('pt-BR')}
                           {daysLeft !== null && daysLeft <= 7 && daysLeft > 0 && (
-                            <span className="text-neon-orange font-semibold">({daysLeft}d restantes)</span>
+                            <span className="text-yellow-400 font-semibold">({daysLeft}d restantes)</span>
                           )}
                         </span>
                       )}
                     </div>
                     {sub.status === 'pending' && (
-                      <p className="text-xs text-neon-orange mt-2 flex items-center gap-1">
+                      <p className="text-xs text-yellow-400 mt-2 flex items-center gap-1">
                         <AlertTriangle className="w-3 h-3" />
                         Aguardando confirmação do pagamento. Após pagar, a assinatura será ativada automaticamente.
                       </p>
@@ -187,15 +218,15 @@ export default function Subscription() {
                 return (
                   <div
                     key={plan.id}
-                    className={`relative rounded-2xl border-2 p-6 bg-member-elevated/85 backdrop-blur-sm transition-all ${plan.color} ${isCurrentPlan ? 'opacity-60' : 'hover:scale-[1.02] cursor-pointer'}`}
+                    className={`relative rounded-2xl border-2 p-6 bg-[#1A1A1A] transition-all ${plan.color} ${isCurrentPlan ? 'opacity-60' : 'hover:scale-105 cursor-pointer'}`}
                   >
                     {plan.badge && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-neon-fuchsia to-neon-pink text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap shadow-[0_0_20px_-4px_rgba(232,121,249,0.7)]">
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#E50914] text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
                         {plan.badge}
                       </div>
                     )}
                     <div className="flex items-center gap-3 mb-4">
-                      <Icon className="w-6 h-6 text-neon-cyan drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" />
+                      <Icon className="w-6 h-6 text-[#E50914]" />
                       <h2 className="text-xl font-bold text-white">{plan.name}</h2>
                     </div>
                     <div className="mb-6">
@@ -205,7 +236,7 @@ export default function Subscription() {
                     <ul className="space-y-3 mb-8">
                       {plan.features.map((feature, i) => (
                         <li key={i} className="flex items-center gap-2 text-sm text-gray-300">
-                          <Check className="w-4 h-4 text-neon-lime shrink-0 drop-shadow-[0_0_6px_rgba(74,222,128,0.5)]" />
+                          <Check className="w-4 h-4 text-green-500 shrink-0" />
                           {feature}
                         </li>
                       ))}
@@ -213,11 +244,7 @@ export default function Subscription() {
                     <Button
                       onClick={() => !isCurrentPlan && handleSelectPlan(plan)}
                       disabled={isCurrentPlan}
-                      className={`w-full font-bold border-0 ${
-                        isCurrentPlan
-                          ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                          : 'bg-gradient-to-r from-neon-fuchsia via-neon-magenta to-neon-cyan text-white hover:opacity-95 shadow-[0_0_24px_-6px_rgba(232,121,249,0.55)]'
-                      }`}
+                      className={`w-full font-bold ${isCurrentPlan ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-[#E50914] hover:bg-[#FF3D3D] text-white'}`}
                     >
                       {isCurrentPlan ? "Plano Atual" : isActive ? "Mudar para este plano" : "Assinar Agora"}
                     </Button>
@@ -226,8 +253,8 @@ export default function Subscription() {
               })}
             </div>
 
-            <p className="text-center text-xs text-gray-500 mt-8 max-w-xl mx-auto">
-              {subscriptionPage.paymentNote}
+            <p className="text-center text-xs text-gray-600 mt-8">
+              Pagamento 100% seguro via AbacatePay • PIX ou Cartão de Crédito • Cancele quando quiser
             </p>
           </>
         )}

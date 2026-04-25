@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { seriesQualifiesForHomeCatalogEpisodes } from '@/lib/homeRowOrderPreference';
 import { Link, useNavigate } from 'react-router-dom';
-import { Film, Tv, Users, Key, Lightbulb, Smile, BarChart3, CreditCard, LayoutDashboard, Database, Tags } from 'lucide-react';
+import { Film, Tv, Users, Key, Lightbulb, Smile, BarChart3, CreditCard, LayoutDashboard } from 'lucide-react';
 import AdminSubscriptions from './AdminSubscriptions';
 
 const TABS = [
@@ -31,46 +30,9 @@ export default function AdminDashboard() {
 
   const usedCodes = codes.filter(c => c.used_by);
 
-  const seriesById = useMemo(() => Object.fromEntries(series.map((s) => [s.id, s])), [series]);
-
-  /** Conta só o que entra nas fileiras da home (não o catálogo legado inteiro). */
-  const homeTitlesCount = useMemo(
-    () =>
-      series.filter(
-        (s) =>
-          s.published !== false &&
-          String(s.cover_url || '').trim() !== '' &&
-          seriesQualifiesForHomeCatalogEpisodes(s)
-      ).length,
-    [series]
-  );
-
-  const homeEpisodesWithVideoCount = useMemo(
-    () =>
-      episodes.filter((ep) => {
-        const p = seriesById[ep.series_id];
-        if (!p || p.published === false) return false;
-        if (!seriesQualifiesForHomeCatalogEpisodes(p)) return false;
-        return String(ep.video_url || '').trim() !== '';
-      }).length,
-    [episodes, seriesById]
-  );
-
   const stats = [
-    {
-      label: 'Títulos na home',
-      value: homeTitlesCount,
-      icon: Tv,
-      color: 'from-red-500 to-red-700',
-      link: '/AdminSeries',
-    },
-    {
-      label: 'Aulas com vídeo',
-      value: homeEpisodesWithVideoCount,
-      icon: Film,
-      color: 'from-blue-500 to-blue-700',
-      link: '/AdminSeries',
-    },
+    { label: 'Séries', value: series.length, icon: Tv, color: 'from-red-500 to-red-700', link: '/AdminSeries' },
+    { label: 'Episódios', value: episodes.length, icon: Film, color: 'from-blue-500 to-blue-700', link: '/AdminSeries' },
     { label: 'Usuários', value: users.length, icon: Users, color: 'from-green-500 to-green-700', link: '/AdminUsers' },
     { label: 'Códigos', value: `${usedCodes.length}/${codes.length}`, icon: Key, color: 'from-yellow-500 to-yellow-700', link: '/AdminCodes' },
   ];
@@ -81,7 +43,7 @@ export default function AdminDashboard() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">Painel Administrativo</h1>
-            <p className="text-gray-400 text-sm mt-1">Gerencie todo o conteúdo do Terror 10 reais</p>
+            <p className="text-gray-400 text-sm mt-1">Gerencie todo o conteúdo do DesenhosFlix</p>
           </div>
         </div>
 
@@ -126,15 +88,13 @@ export default function AdminDashboard() {
           <div className="space-y-3">
             <h2 className="text-lg font-bold mb-3">Acesso Rápido</h2>
             {[
-              { label: 'Backup do catálogo (export/import)', to: '/AdminPersistence', icon: Database },
               { label: 'Dashboard de Métricas', to: '/AdminMetrics', icon: BarChart3 },
               { label: 'Banner Principal (Destaques)', to: '/AdminBanner', icon: LayoutDashboard },
-              { label: 'Séries, filmes e episódios', to: '/AdminSeries', icon: Tv },
-              { label: 'Adicionar Categoria', to: '/AdminCategories', icon: Tags },
+              { label: 'Gerenciar Séries & Episódios', to: '/AdminSeries', icon: Tv },
               { label: 'Gerenciar Usuários', to: '/AdminUsers', icon: Users },
               { label: 'Códigos de Acesso', to: '/AdminCodes', icon: Key },
               { label: 'Propostas de Conteúdo', to: '/AdminProposals', icon: Lightbulb },
-              { label: 'Avatares de perfil', to: '/AdminAvatars', icon: Smile },
+              { label: 'Gerenciar Avatares', to: '/AdminAvatars', icon: Smile },
             ].map(item => (
               <Link
                 key={item.to}

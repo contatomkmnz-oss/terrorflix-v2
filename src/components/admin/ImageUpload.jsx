@@ -1,8 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Upload, X, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { publicAssetUrl } from '@/lib/publicAssetUrl';
 
 export default function ImageUpload({ value, onChange, placeholder = "Clique para enviar uma imagem", aspectRatio = "cover" }) {
   const [uploading, setUploading] = useState(false);
@@ -12,15 +10,9 @@ export default function ImageUpload({ value, onChange, placeholder = "Clique par
     const file = e.target.files[0];
     if (!file) return;
     setUploading(true);
-    try {
-      const response = await base44.integrations.Core.UploadFile({ file });
-      onChange(response.file_url);
-    } catch (err) {
-      toast.error(err?.message || 'Falha ao processar a imagem. Tente outro ficheiro ou cole uma URL.');
-    } finally {
-      setUploading(false);
-      e.target.value = '';
-    }
+    const response = await base44.integrations.Core.UploadFile({ file });
+    onChange(response.file_url);
+    setUploading(false);
   };
 
   const heightClass = aspectRatio === 'square' ? 'aspect-square' : 'h-36';
@@ -33,7 +25,7 @@ export default function ImageUpload({ value, onChange, placeholder = "Clique par
       >
         {value ? (
           <>
-            <img src={publicAssetUrl(value)} alt="" className="w-full h-full object-cover" />
+            <img src={value} alt="" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
               <p className="text-sm text-white font-medium">Trocar imagem</p>
             </div>
